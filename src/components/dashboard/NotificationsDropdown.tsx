@@ -10,20 +10,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, AlertTriangle, Clock, FileText } from "lucide-react";
+import { Bell, AlertTriangle, Clock, FileText, Package, TrendingDown } from "lucide-react";
 import { format, isPast, isToday, addDays } from "date-fns";
 import { ar } from "date-fns/locale";
 
 interface Notification {
   id: string;
-  type: "overdue" | "due_soon" | "unpaid";
+  type: "overdue" | "due_soon" | "unpaid" | "low_stock" | "out_of_stock";
   title: string;
   message: string;
-  invoiceId: string;
-  invoiceNumber: string;
-  amount: number;
-  dueDate: string | null;
+  invoiceId?: string;
+  productId?: string;
+  invoiceNumber?: string;
+  productName?: string;
+  amount?: number;
+  quantity?: number;
+  minQuantity?: number;
+  dueDate?: string | null;
   priority: "high" | "medium" | "low";
+  category: "invoice" | "inventory";
 }
 
 const NotificationsDropdown = () => {
@@ -63,6 +68,24 @@ const NotificationsDropdown = () => {
   const fetchNotifications = async () => {
     if (!companyId) return;
 
+    const notificationsList: Notification[] = [];
+
+    // Fetch invoice notifications
+    await fetchInvoiceNotifications(notificationsList);
+    
+    // Fetch inventory notifications
+    await fetchInventoryNotifications(notificationsList);
+
+    // Sort by priority
+    notificationsList.sort((a, b) => {
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
+
+    setNotifications(notificationsList);
+  };
+
+  const fetchInvoiceNotifications = async (notificationsList: Notification[]) => {
     // Get invoices that are not paid or cancelled
     const { data: invoices, error } = await supabase
       .from("invoices")
@@ -76,7 +99,6 @@ const NotificationsDropdown = () => {
       return;
     }
 
-    const notificationsList: Notification[] = [];
     const today = new Date();
     const threeDaysFromNow = addDays(today, 3);
 
@@ -100,6 +122,7 @@ const NotificationsDropdown = () => {
             amount: remaining,
             dueDate: invoice.due_date,
             priority: "high",
+            category: "invoice",
           });
 
           // Update invoice status to overdue if not already
@@ -122,6 +145,7 @@ const NotificationsDropdown = () => {
             amount: remaining,
             dueDate: invoice.due_date,
             priority: "medium",
+            category: "invoice",
           });
         }
       } else if (remaining > 0) {
@@ -136,22 +160,68 @@ const NotificationsDropdown = () => {
           amount: remaining,
           dueDate: null,
           priority: "low",
+          category: "invoice",
         });
       }
     }
+  };
 
-    // Sort by priority
-    notificationsList.sort((a, b) => {
-      const priorityOrder = { high: 0, medium: 1, low: 2 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
+  const fetchInventoryNotifications = async (notificationsList: Notification[]) => {
+    // Get products with low or zero stock
+    const { data: products, error } = await supabase
+      .from("products")
+      .select("id, name, name_ar, quantity, min_quantity")
+      .eq("company_id", companyId)
+      .eq("is_active", true);
 
-    setNotifications(notificationsList);
+    if (error) {
+      console.error("Error fetching products for notifications:", error);
+      return;
+    }
+
+    for (const product of products || []) {
+      const productName = product.name_ar || product.name;
+      
+      // Out of stock
+      if (product.quantity === 0) {
+        notificationsList.push({
+          id: `out-of-stock-${product.id}`,
+          type: "out_of_stock",
+          title: "نفذ من المخزون",
+          message: `المنتج "${productName}" نفذ تماماً من المخزون`,
+          productId: product.id,
+          productName: productName,
+          quantity: product.quantity,
+          minQuantity: product.min_quantity,
+          priority: "high",
+          category: "inventory",
+        });
+      }
+      // Low stock
+      else if (product.quantity <= product.min_quantity && product.min_quantity > 0) {
+        notificationsList.push({
+          id: `low-stock-${product.id}`,
+          type: "low_stock",
+          title: "مخزون منخفض",
+          message: `المنتج "${productName}" وصل للحد الأدنى (${product.quantity} من ${product.min_quantity})`,
+          productId: product.id,
+          productName: productName,
+          quantity: product.quantity,
+          minQuantity: product.min_quantity,
+          priority: "medium",
+          category: "inventory",
+        });
+      }
+    }
   };
 
   const handleNotificationClick = (notification: Notification) => {
     setIsOpen(false);
-    navigate("/invoices");
+    if (notification.category === "inventory") {
+      navigate("/inventory");
+    } else {
+      navigate("/invoices");
+    }
   };
 
   const getNotificationIcon = (type: string) => {
@@ -160,6 +230,10 @@ const NotificationsDropdown = () => {
         return <AlertTriangle className="w-4 h-4 text-destructive" />;
       case "due_soon":
         return <Clock className="w-4 h-4 text-yellow-500" />;
+      case "out_of_stock":
+        return <Package className="w-4 h-4 text-destructive" />;
+      case "low_stock":
+        return <TrendingDown className="w-4 h-4 text-amber-500" />;
       default:
         return <FileText className="w-4 h-4 text-muted-foreground" />;
     }
@@ -176,7 +250,8 @@ const NotificationsDropdown = () => {
     }
   };
 
-  const overdueCount = notifications.filter((n) => n.type === "overdue").length;
+  const overdueCount = notifications.filter((n) => n.type === "overdue" || n.type === "out_of_stock").length;
+  const inventoryAlertCount = notifications.filter((n) => n.category === "inventory").length;
   const totalCount = notifications.length;
 
   return (
@@ -198,11 +273,18 @@ const NotificationsDropdown = () => {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">الإشعارات</h3>
-            {overdueCount > 0 && (
-              <Badge variant="destructive" className="text-xs">
-                {overdueCount} متأخرة
-              </Badge>
-            )}
+            <div className="flex gap-2">
+              {inventoryAlertCount > 0 && (
+                <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-600">
+                  {inventoryAlertCount} مخزون
+                </Badge>
+              )}
+              {overdueCount > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  {overdueCount} عاجل
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
         <ScrollArea className="h-80">
@@ -229,12 +311,20 @@ const NotificationsDropdown = () => {
                         {notification.message}
                       </p>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs font-medium text-primary">
-                          {notification.amount.toFixed(2)} جنيه
-                        </span>
-                        {notification.dueDate && (
+                        {notification.category === "invoice" ? (
+                          <>
+                            <span className="text-xs font-medium text-primary">
+                              {notification.amount?.toFixed(2)} جنيه
+                            </span>
+                            {notification.dueDate && (
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(notification.dueDate), "dd/MM/yyyy", { locale: ar })}
+                              </span>
+                            )}
+                          </>
+                        ) : (
                           <span className="text-xs text-muted-foreground">
-                            {format(new Date(notification.dueDate), "dd/MM/yyyy", { locale: ar })}
+                            الكمية: {notification.quantity} / الحد الأدنى: {notification.minQuantity}
                           </span>
                         )}
                       </div>
@@ -246,16 +336,26 @@ const NotificationsDropdown = () => {
           )}
         </ScrollArea>
         {notifications.length > 0 && (
-          <div className="p-2 border-t">
+          <div className="p-2 border-t flex gap-2">
             <Button
               variant="ghost"
-              className="w-full text-sm"
+              className="flex-1 text-sm"
               onClick={() => {
                 setIsOpen(false);
                 navigate("/invoices");
               }}
             >
-              عرض كل الفواتير
+              الفواتير
+            </Button>
+            <Button
+              variant="ghost"
+              className="flex-1 text-sm"
+              onClick={() => {
+                setIsOpen(false);
+                navigate("/inventory");
+              }}
+            >
+              المخزون
             </Button>
           </div>
         )}
