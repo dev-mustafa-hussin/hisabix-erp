@@ -36,8 +36,22 @@ import {
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { ar } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import {
   Package,
   AlertTriangle,
@@ -56,6 +70,9 @@ import {
   Upload,
   FileSpreadsheet,
   Download,
+  CalendarIcon,
+  Filter,
+  RotateCcw,
 } from "lucide-react";
 
 interface Product {
@@ -120,6 +137,12 @@ const Inventory = () => {
   const [companyData, setCompanyData] = useState<{ name: string; email: string | null } | null>(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Movement filters
+  const [movementDateFrom, setMovementDateFrom] = useState<Date | undefined>(undefined);
+  const [movementDateTo, setMovementDateTo] = useState<Date | undefined>(undefined);
+  const [movementProductFilter, setMovementProductFilter] = useState<string>("all");
+  const [movementTypeFilter, setMovementTypeFilter] = useState<string>("all");
 
   useEffect(() => {
     const fetchCompanyId = async () => {
@@ -443,13 +466,13 @@ const Inventory = () => {
     toast.success("تم تصدير المخزون بنجاح");
   };
 
-  const exportMovementsToExcel = () => {
-    if (stockMovements.length === 0) {
+  const exportMovementsToExcel = (movementsToExport: StockMovementRecord[]) => {
+    if (movementsToExport.length === 0) {
       toast.error("لا توجد حركات للتصدير");
       return;
     }
 
-    const exportData = stockMovements.map((movement) => ({
+    const exportData = movementsToExport.map((movement) => ({
       "التاريخ": format(new Date(movement.created_at), "dd/MM/yyyy HH:mm", { locale: ar }),
       "المنتج": movement.product?.name_ar || movement.product?.name || "-",
       "نوع الحركة": movement.movement_type === "in" ? "إضافة" : "سحب",
@@ -486,6 +509,39 @@ const Inventory = () => {
       p.name_ar?.includes(searchTerm) ||
       p.sku?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Filter movements
+  const filteredMovements = stockMovements.filter((movement) => {
+    // Date filter
+    const movementDate = new Date(movement.created_at);
+    if (movementDateFrom && movementDate < startOfDay(movementDateFrom)) {
+      return false;
+    }
+    if (movementDateTo && movementDate > endOfDay(movementDateTo)) {
+      return false;
+    }
+
+    // Product filter
+    if (movementProductFilter !== "all" && movement.product_id !== movementProductFilter) {
+      return false;
+    }
+
+    // Type filter
+    if (movementTypeFilter !== "all" && movement.movement_type !== movementTypeFilter) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const resetMovementFilters = () => {
+    setMovementDateFrom(undefined);
+    setMovementDateTo(undefined);
+    setMovementProductFilter("all");
+    setMovementTypeFilter("all");
+  };
+
+  const hasActiveFilters = movementDateFrom || movementDateTo || movementProductFilter !== "all" || movementTypeFilter !== "all";
 
   const getStockStatus = (product: Product) => {
     if (product.quantity === 0) {
@@ -842,9 +898,9 @@ const Inventory = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={exportMovementsToExcel}
+                    onClick={() => exportMovementsToExcel(filteredMovements)}
                     className="gap-2"
-                    disabled={stockMovements.length === 0}
+                    disabled={filteredMovements.length === 0}
                   >
                     <FileSpreadsheet className="w-4 h-4" />
                     تصدير Excel
@@ -858,15 +914,121 @@ const Inventory = () => {
                   جميع عمليات الإضافة والسحب من المخزون
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* Filters */}
+                <div className="flex flex-wrap items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">فلترة:</span>
+                  </div>
+
+                  {/* Date From */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "gap-2 w-[140px] justify-start",
+                          !movementDateFrom && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="w-4 h-4" />
+                        {movementDateFrom ? format(movementDateFrom, "dd/MM/yyyy") : "من تاريخ"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={movementDateFrom}
+                        onSelect={setMovementDateFrom}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Date To */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "gap-2 w-[140px] justify-start",
+                          !movementDateTo && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="w-4 h-4" />
+                        {movementDateTo ? format(movementDateTo, "dd/MM/yyyy") : "إلى تاريخ"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={movementDateTo}
+                        onSelect={setMovementDateTo}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Product Filter */}
+                  <Select value={movementProductFilter} onValueChange={setMovementProductFilter}>
+                    <SelectTrigger className="w-[160px] h-9">
+                      <SelectValue placeholder="المنتج" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع المنتجات</SelectItem>
+                      {products.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          {product.name_ar || product.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Type Filter */}
+                  <Select value={movementTypeFilter} onValueChange={setMovementTypeFilter}>
+                    <SelectTrigger className="w-[120px] h-9">
+                      <SelectValue placeholder="النوع" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">الكل</SelectItem>
+                      <SelectItem value="in">إضافة</SelectItem>
+                      <SelectItem value="out">سحب</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Reset Filters */}
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={resetMovementFilters}
+                      className="gap-1 text-muted-foreground"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      إعادة تعيين
+                    </Button>
+                  )}
+
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" className="mr-auto">
+                      {filteredMovements.length} نتيجة
+                    </Badge>
+                  )}
+                </div>
+
                 {loadingMovements ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
                   </div>
-                ) : stockMovements.length === 0 ? (
+                ) : filteredMovements.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>لا توجد حركات مسجلة</p>
+                    <p>{hasActiveFilters ? "لا توجد نتائج مطابقة للفلتر" : "لا توجد حركات مسجلة"}</p>
                   </div>
                 ) : (
                   <Table>
@@ -882,7 +1044,7 @@ const Inventory = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {stockMovements.map((movement) => (
+                      {filteredMovements.map((movement) => (
                         <TableRow key={movement.id}>
                           <TableCell className="text-muted-foreground">
                             {format(new Date(movement.created_at), "dd/MM/yyyy HH:mm", {
