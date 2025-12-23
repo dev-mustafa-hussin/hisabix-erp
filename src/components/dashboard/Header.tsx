@@ -2,15 +2,14 @@ import { Calendar, Grid3X3, HelpCircle, LogOut, RefreshCcw, Settings, Sun, Moon 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/useTheme";
+import { toastSuccess, toastInfo } from "@/utils/toastNotifications";
 import NotificationsDropdown from "./NotificationsDropdown";
 import { MobileSidebarTrigger } from "./Sidebar";
 
 const Header = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
-  const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
 
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -21,11 +20,21 @@ const Header = () => {
 
   const handleLogout = async () => {
     await signOut();
-    toast({
-      title: "تم تسجيل الخروج",
-      description: "نراك قريباً!",
-    });
+    toastSuccess("تم تسجيل الخروج", "نراك قريباً!");
     navigate("/");
+  };
+
+  const handleRefresh = () => {
+    toastInfo("جاري التحديث", "يتم تحديث البيانات...");
+    window.location.reload();
+  };
+
+  const handleThemeToggle = () => {
+    toggleTheme();
+    toastInfo(
+      theme === "dark" ? "الوضع الفاتح" : "الوضع الداكن",
+      theme === "dark" ? "تم التبديل إلى الوضع الفاتح" : "تم التبديل إلى الوضع الداكن"
+    );
   };
 
   return (
@@ -59,13 +68,13 @@ const Header = () => {
           <Grid3X3 className="w-4 h-4" />
           <span className="hidden lg:inline">نقطة بيع</span>
         </Button>
-        <Button variant="ghost" size="icon" className="text-muted-foreground hidden sm:flex transition-all duration-200 hover:scale-110 hover:rotate-180">
+        <Button variant="ghost" size="icon" className="text-muted-foreground hidden sm:flex transition-all duration-200 hover:scale-110 hover:rotate-180" onClick={handleRefresh}>
           <RefreshCcw className="w-4 h-4" />
         </Button>
         <Button 
           variant="ghost" 
           size="icon" 
-          onClick={toggleTheme}
+          onClick={handleThemeToggle}
           className="text-muted-foreground transition-all duration-300 hover:scale-110"
         >
           {theme === "dark" ? (
