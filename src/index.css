@@ -10,8 +10,9 @@
 
 @layer base {
   :root {
-    --background: 216 50% 8%;
-    --foreground: 210 40% 98%;
+    /* Light Mode - Default */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -22,10 +23,61 @@
     --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 216 50% 12%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 239 84% 67%;
+
+    --radius: 0.5rem;
+
+    /* Custom Colors */
+    --hero-gradient-start: 220 14% 96%;
+    --hero-gradient-end: 220 14% 92%;
+    --glow-primary: 239 84% 67%;
+    --glow-accent: 173 80% 40%;
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --info: 199 89% 48%;
+
+    /* Sidebar - Light */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 239 84% 95%;
+    --sidebar-accent-foreground: 239 84% 50%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 239 84% 67%;
+  }
+
+  .dark {
+    --background: 216 50% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 216 50% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 216 50% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 216 50% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 216 40% 15%;
+    --muted: 216 40% 18%;
     --muted-foreground: 215 20% 65%;
 
     --accent: 173 80% 40%;
@@ -34,29 +86,22 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 216 30% 20%;
+    --border: 216 30% 22%;
     --input: 216 30% 25%;
     --ring: 239 84% 67%;
 
-    --radius: 0.5rem;
-
-    /* HisabiX Custom Colors */
+    /* Custom Colors - Dark */
     --hero-gradient-start: 216 60% 6%;
     --hero-gradient-end: 220 50% 12%;
-    --glow-primary: 239 84% 67%;
-    --glow-accent: 173 80% 40%;
-    --success: 142 76% 36%;
-    --warning: 38 92% 50%;
-    --info: 199 89% 48%;
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
+    /* Sidebar - Dark */
+    --sidebar-background: 216 50% 10%;
+    --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 239 84% 95%;
-    --sidebar-accent-foreground: 239 84% 50%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-accent: 239 50% 20%;
+    --sidebar-accent-foreground: 239 84% 80%;
+    --sidebar-border: 216 30% 20%;
     --sidebar-ring: 239 84% 67%;
   }
 }
