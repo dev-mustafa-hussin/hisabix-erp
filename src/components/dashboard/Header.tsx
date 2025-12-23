@@ -1,8 +1,9 @@
-import { Bell, Calendar, Grid3X3, HelpCircle, LogOut, RefreshCcw, Settings, Sun } from "lucide-react";
+import { Calendar, Grid3X3, HelpCircle, LogOut, RefreshCcw, Settings, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import NotificationsDropdown from "./NotificationsDropdown";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -32,9 +33,7 @@ const Header = () => {
           <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded">حالة الاشتراك</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-muted-foreground">
-            <Bell className="w-5 h-5" />
-          </Button>
+          <NotificationsDropdown />
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
             <span>{currentDate}</span>
