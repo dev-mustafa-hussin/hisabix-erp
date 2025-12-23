@@ -22,6 +22,7 @@ import NotificationsDashboard from "./pages/NotificationsDashboard";
 import InventoryReport from "./pages/InventoryReport";
 import UserManagement from "./pages/UserManagement";
 import AuditLogs from "./pages/AuditLogs";
+import AcceptInvitation from "./pages/AcceptInvitation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/accept-invitation" element={<AcceptInvitation />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />

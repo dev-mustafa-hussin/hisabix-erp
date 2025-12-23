@@ -80,6 +80,7 @@ interface CompanyUser {
   role: "admin" | "moderator" | "user";
   is_owner: boolean;
   created_at: string;
+  expires_at: string | null;
   profile?: {
     full_name: string | null;
     avatar_url: string | null;
@@ -118,6 +119,7 @@ const UserManagement = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<CompanyUser | null>(null);
   const [editRole, setEditRole] = useState<"admin" | "moderator" | "user">("user");
+  const [editExpiresAt, setEditExpiresAt] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
   // Delete user
@@ -190,7 +192,8 @@ const UserManagement = () => {
         company_id,
         role,
         is_owner,
-        created_at
+        created_at,
+        expires_at
       `)
       .eq("company_id", compId)
       .order("created_at", { ascending: true });
@@ -212,6 +215,7 @@ const UserManagement = () => {
       usersWithProfiles.push({
         ...u,
         role: u.role as "admin" | "moderator" | "user",
+        expires_at: u.expires_at || null,
         profile: profile || undefined,
       });
     }
@@ -322,6 +326,7 @@ const UserManagement = () => {
   const handleEditUser = (companyUser: CompanyUser) => {
     setEditingUser(companyUser);
     setEditRole(companyUser.role);
+    setEditExpiresAt(companyUser.expires_at ? companyUser.expires_at.split('T')[0] : "");
     setEditOpen(true);
   };
 
@@ -332,10 +337,15 @@ const UserManagement = () => {
 
     try {
       const oldRole = editingUser.role;
+      const oldExpiresAt = editingUser.expires_at;
+      const newExpiresAt = editExpiresAt ? new Date(editExpiresAt).toISOString() : null;
       
       const { error } = await supabase
         .from("company_users")
-        .update({ role: editRole })
+        .update({ 
+          role: editRole,
+          expires_at: newExpiresAt,
+        })
         .eq("id", editingUser.id);
 
       if (error) throw error;
@@ -347,11 +357,11 @@ const UserManagement = () => {
         actionType: "role_change",
         targetType: "user",
         targetId: editingUser.user_id,
-        oldValue: { role: oldRole, name: editingUser.profile?.full_name },
-        newValue: { role: editRole, name: editingUser.profile?.full_name },
+        oldValue: { role: oldRole, expires_at: oldExpiresAt, name: editingUser.profile?.full_name },
+        newValue: { role: editRole, expires_at: newExpiresAt, name: editingUser.profile?.full_name },
       });
 
-      toast.success("تم تحديث الصلاحية بنجاح");
+      toast.success("تم تحديث بيانات المستخدم بنجاح");
       setEditOpen(false);
       setEditingUser(null);
 
@@ -570,6 +580,7 @@ const UserManagement = () => {
                     <TableHead className="text-right">المستخدم</TableHead>
                     <TableHead className="text-right">الصلاحية</TableHead>
                     <TableHead className="text-right">تاريخ الانضمام</TableHead>
+                    <TableHead className="text-right">تاريخ الانتهاء</TableHead>
                     <TableHead className="text-right">الهاتف</TableHead>
                     {(isOwner || isAdmin) && (
                       <TableHead className="text-center">الإجراءات</TableHead>
@@ -622,6 +633,19 @@ const UserManagement = () => {
                           <Calendar className="w-4 h-4" />
                           {format(new Date(companyUser.created_at), "dd MMM yyyy", { locale: ar })}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {companyUser.expires_at ? (
+                          <div className={`flex items-center gap-1 ${new Date(companyUser.expires_at) < new Date() ? 'text-destructive' : 'text-amber-600'}`}>
+                            <Clock className="w-4 h-4" />
+                            {format(new Date(companyUser.expires_at), "dd MMM yyyy", { locale: ar })}
+                            {new Date(companyUser.expires_at) < new Date() && (
+                              <Badge variant="destructive" className="mr-1 text-xs">منتهي</Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {companyUser.profile?.phone || "-"}
@@ -752,18 +776,49 @@ const UserManagement = () => {
               تغيير صلاحية {editingUser?.profile?.full_name || "المستخدم"}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label className="text-right block mb-2">الصلاحية الجديدة</Label>
-            <Select value={editRole} onValueChange={(v) => setEditRole(v as any)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">مستخدم</SelectItem>
-                <SelectItem value="moderator">مشرف</SelectItem>
-                <SelectItem value="admin">مدير</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-right block">الصلاحية الجديدة</Label>
+              <Select value={editRole} onValueChange={(v) => setEditRole(v as any)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">مستخدم</SelectItem>
+                  <SelectItem value="moderator">مشرف</SelectItem>
+                  <SelectItem value="admin">مدير</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-right block flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                تاريخ انتهاء الصلاحية (اختياري)
+              </Label>
+              <Input
+                type="date"
+                value={editExpiresAt}
+                onChange={(e) => setEditExpiresAt(e.target.value)}
+                className="text-left"
+                dir="ltr"
+                min={new Date().toISOString().split('T')[0]}
+              />
+              <p className="text-xs text-muted-foreground">
+                اتركه فارغاً إذا كنت لا تريد تحديد تاريخ انتهاء
+              </p>
+              {editExpiresAt && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditExpiresAt("")}
+                  className="text-muted-foreground"
+                >
+                  <X className="w-4 h-4 ml-1" />
+                  إزالة تاريخ الانتهاء
+                </Button>
+              )}
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setEditOpen(false)}>
