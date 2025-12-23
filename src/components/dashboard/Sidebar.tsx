@@ -30,7 +30,7 @@ const menuItems = [
   { icon: FileText, label: "المعاملات", href: "#" },
   { icon: ShoppingCart, label: "المشتريات", href: "#", hasSubmenu: true },
   { icon: Warehouse, label: "دخول المخزن", href: "#" },
-  { icon: Store, label: "المبيعات", href: "#" },
+  { icon: Store, label: "المبيعات", href: "/sales" },
   { icon: Receipt, label: "المصروفات", href: "#" },
   { icon: Truck, label: "إدارة المشتريات", href: "#", hasSubmenu: true },
   { icon: Calculator, label: "التقارير", href: "#", hasSubmenu: true },
