@@ -48,7 +48,9 @@ import {
   Eye,
   RefreshCw,
   Filter,
+  RotateCcw,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface NotificationLog {
   id: string;
@@ -67,9 +69,12 @@ const NotificationLogs = () => {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string>("");
+  const [companyEmail, setCompanyEmail] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedLog, setSelectedLog] = useState<NotificationLog | null>(null);
+  const [resending, setResending] = useState<string | null>(null);
 
   const fetchLogs = async () => {
     if (!companyId) return;
@@ -115,6 +120,18 @@ const NotificationLogs = () => {
 
       if (companyUser) {
         setCompanyId(companyUser.company_id);
+        
+        // Fetch company details
+        const { data: company } = await supabase
+          .from("companies")
+          .select("name, email")
+          .eq("id", companyUser.company_id)
+          .maybeSingle();
+        
+        if (company) {
+          setCompanyName(company.name || "");
+          setCompanyEmail(company.email || "");
+        }
       }
     };
 
@@ -164,6 +181,51 @@ const NotificationLogs = () => {
         فشل
       </Badge>
     );
+  };
+
+  const handleResend = async (log: NotificationLog) => {
+    if (!companyId) return;
+
+    setResending(log.id);
+
+    try {
+      if (log.notification_type === "stock_alert") {
+        const { data, error } = await supabase.functions.invoke("send-stock-alert", {
+          body: {
+            company_id: companyId,
+            recipient_email: log.recipient_email,
+            company_name: companyName,
+          },
+        });
+
+        if (error) throw error;
+        toast.success("تم إعادة إرسال تنبيه المخزون بنجاح");
+      } else if (log.notification_type === "invoice_reminder") {
+        const invoiceId = (log.metadata as Record<string, unknown>)?.invoice_id as string;
+        
+        if (!invoiceId) {
+          toast.error("لا يمكن إعادة الإرسال - معرف الفاتورة غير موجود");
+          return;
+        }
+
+        const { data, error } = await supabase.functions.invoke("send-invoice-reminder", {
+          body: {
+            invoiceId,
+          },
+        });
+
+        if (error) throw error;
+        toast.success("تم إعادة إرسال تذكير الفاتورة بنجاح");
+      }
+
+      // Refresh logs
+      fetchLogs();
+    } catch (error: any) {
+      console.error("Error resending notification:", error);
+      toast.error("فشل في إعادة الإرسال: " + (error.message || "خطأ غير معروف"));
+    } finally {
+      setResending(null);
+    }
   };
 
   const stats = {
@@ -306,7 +368,7 @@ const NotificationLogs = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center w-20">التفاصيل</TableHead>
+                    <TableHead className="text-center w-32">الإجراءات</TableHead>
                     <TableHead className="text-center">الحالة</TableHead>
                     <TableHead className="text-right">العنوان</TableHead>
                     <TableHead className="text-right">المستلم</TableHead>
@@ -318,16 +380,17 @@ const NotificationLogs = () => {
                   {logs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell className="text-center">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedLog(log)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
+                        <div className="flex items-center justify-center gap-1">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedLog(log)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
                           <DialogContent className="max-w-lg">
                             <DialogHeader>
                               <DialogTitle className="text-right">
@@ -450,6 +513,23 @@ const NotificationLogs = () => {
                             )}
                           </DialogContent>
                         </Dialog>
+                        
+                        {log.status === "failed" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleResend(log)}
+                            disabled={resending === log.id}
+                            title="إعادة الإرسال"
+                          >
+                            {resending === log.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <RotateCcw className="w-4 h-4 text-amber-600" />
+                            )}
+                          </Button>
+                        )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
                         {getStatusBadge(log.status)}
