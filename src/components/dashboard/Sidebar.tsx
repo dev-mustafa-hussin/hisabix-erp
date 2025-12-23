@@ -37,6 +37,7 @@ const menuItems = [
   { icon: FileBox, label: "نماذج الإشعارات", href: "#" },
   { icon: Megaphone, label: "إدارة الترويج المخزني", href: "#" },
   { icon: BarChart3, label: "المتجر الإلكتروني", href: "#", hasSubmenu: true },
+  { icon: Settings, label: "إعدادات الشركة", href: "/company-settings" },
 ];
 
 const Sidebar = () => {
