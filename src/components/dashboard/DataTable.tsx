@@ -10,36 +10,38 @@ interface DataTableProps {
 
 const DataTable = ({ title, icon, columns, filterTabs }: DataTableProps) => {
   return (
-    <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+    <div className="bg-card rounded-xl p-4 lg:p-6 shadow-sm border border-border">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" className="gap-1 text-xs">
             <Download className="w-3 h-3" />
-            تصدير إلى CSV
+            <span className="hidden sm:inline">تصدير إلى CSV</span>
+            <span className="sm:hidden">CSV</span>
           </Button>
           <Button variant="outline" size="sm" className="gap-1 text-xs">
             <FileSpreadsheet className="w-3 h-3" />
-            تصدير إلى Excel
+            <span className="hidden sm:inline">تصدير إلى Excel</span>
+            <span className="sm:hidden">Excel</span>
           </Button>
           <Button variant="outline" size="sm" className="gap-1 text-xs">
             <FileText className="w-3 h-3" />
             طباعة
           </Button>
         </div>
-        <h3 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
+        <h3 className="text-base lg:text-lg font-semibold text-card-foreground flex items-center gap-2 order-first sm:order-last">
           {icon}
           {title}
         </h3>
       </div>
 
       {filterTabs && (
-        <div className="flex items-center gap-2 mb-4 justify-end">
+        <div className="flex items-center gap-2 mb-4 justify-end overflow-x-auto pb-2">
           {filterTabs.map((tab, index) => (
             <Button
               key={index}
               variant={index === 0 ? "default" : "outline"}
               size="sm"
-              className="text-xs"
+              className="text-xs whitespace-nowrap"
             >
               {tab}
             </Button>
@@ -47,14 +49,14 @@ const DataTable = ({ title, icon, columns, filterTabs }: DataTableProps) => {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0">
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr className="border-b border-border">
               {columns.map((col, index) => (
                 <th
                   key={index}
-                  className="py-3 px-4 text-right text-sm font-medium text-muted-foreground"
+                  className="py-2 lg:py-3 px-2 lg:px-4 text-right text-xs lg:text-sm font-medium text-muted-foreground whitespace-nowrap"
                 >
                   {col}
                 </th>
@@ -63,7 +65,7 @@ const DataTable = ({ title, icon, columns, filterTabs }: DataTableProps) => {
           </thead>
           <tbody>
             <tr>
-              <td colSpan={columns.length} className="py-8 text-center text-muted-foreground">
+              <td colSpan={columns.length} className="py-6 lg:py-8 text-center text-muted-foreground text-sm">
                 لا توجد بيانات متاحة في الجدول
               </td>
             </tr>
@@ -71,13 +73,13 @@ const DataTable = ({ title, icon, columns, filterTabs }: DataTableProps) => {
         </table>
       </div>
 
-      <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-4 text-xs lg:text-sm text-muted-foreground gap-3">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled className="text-xs">
             <ChevronRight className="w-4 h-4" />
             السابق
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button variant="outline" size="sm" disabled className="text-xs">
             التالي
             <ChevronLeft className="w-4 h-4" />
           </Button>

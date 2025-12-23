@@ -26,23 +26,23 @@ const quickAccessItems = [
 
 const QuickAccess = () => {
   return (
-    <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+    <div className="bg-card rounded-xl p-4 lg:p-6 shadow-sm border border-border">
       <h3 className="text-lg font-semibold text-card-foreground mb-4 flex items-center gap-2">
         <span className="w-1 h-5 bg-primary rounded-full" />
         الوصول السريع
       </h3>
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 lg:gap-4">
         {quickAccessItems.map((item, index) => {
           const Icon = item.icon;
           return (
             <button
               key={index}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl hover:bg-muted transition-colors"
+              className="flex flex-col items-center gap-2 p-3 lg:p-4 rounded-xl hover:bg-muted transition-colors"
             >
-              <div className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center`}>
-                <Icon className="w-6 h-6" />
+              <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl ${item.color} flex items-center justify-center`}>
+                <Icon className="w-5 h-5 lg:w-6 lg:h-6" />
               </div>
-              <span className="text-xs text-card-foreground text-center">{item.label}</span>
+              <span className="text-xs text-card-foreground text-center leading-tight">{item.label}</span>
             </button>
           );
         })}
