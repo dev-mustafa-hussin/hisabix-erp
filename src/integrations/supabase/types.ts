@@ -207,6 +207,47 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          body_html: string
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          subject: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          company_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          subject: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          subject?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           created_at: string
