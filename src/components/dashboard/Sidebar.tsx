@@ -18,6 +18,7 @@ import {
   FileBox,
   Calculator,
   Megaphone,
+  Bell,
 } from "lucide-react";
 import Logo from "../Logo";
 
@@ -38,6 +39,7 @@ const menuItems = [
   { icon: Megaphone, label: "إدارة الترويج المخزني", href: "#" },
   { icon: BarChart3, label: "المتجر الإلكتروني", href: "#", hasSubmenu: true },
   { icon: Settings, label: "إعدادات الشركة", href: "/company-settings" },
+  { icon: Bell, label: "إعدادات الإشعارات", href: "/notification-settings" },
 ];
 
 const Sidebar = () => {
