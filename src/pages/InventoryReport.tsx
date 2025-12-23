@@ -38,6 +38,9 @@ import {
   AreaChart,
   Area,
 } from "recharts";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Package,
   AlertTriangle,
@@ -50,6 +53,11 @@ import {
   CheckCircle,
   XCircle,
   ArrowUpDown,
+  GitCompare,
+  Calendar,
+  ArrowUp,
+  ArrowDown,
+  Minus,
 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -77,8 +85,19 @@ interface StockMovement {
   id: string;
   product_id: string;
   quantity: number;
+  quantity_before: number;
+  quantity_after: number;
   movement_type: string;
   created_at: string;
+}
+
+interface ComparisonData {
+  productId: string;
+  productName: string;
+  period1Quantity: number;
+  period2Quantity: number;
+  difference: number;
+  percentChange: number;
 }
 
 const InventoryReport = () => {
@@ -108,6 +127,20 @@ const InventoryReport = () => {
   const [stockStatusData, setStockStatusData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [movementTrend, setMovementTrend] = useState<{ date: string; in: number; out: number }[]>([]);
   const [topValueProducts, setTopValueProducts] = useState<{ name: string; value: number }[]>([]);
+
+  // Comparison state
+  const [period1Start, setPeriod1Start] = useState<string>(format(subDays(new Date(), 60), "yyyy-MM-dd"));
+  const [period1End, setPeriod1End] = useState<string>(format(subDays(new Date(), 31), "yyyy-MM-dd"));
+  const [period2Start, setPeriod2Start] = useState<string>(format(subDays(new Date(), 30), "yyyy-MM-dd"));
+  const [period2End, setPeriod2End] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [comparisonData, setComparisonData] = useState<ComparisonData[]>([]);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [comparisonSummary, setComparisonSummary] = useState({
+    increased: 0,
+    decreased: 0,
+    unchanged: 0,
+    totalDifference: 0,
+  });
 
   useEffect(() => {
     fetchCompanyId();
@@ -274,6 +307,104 @@ const InventoryReport = () => {
     }));
 
     setMovementTrend(trendData);
+  };
+
+  const fetchComparisonData = async () => {
+    if (!companyId) return;
+    
+    setComparisonLoading(true);
+    
+    try {
+      // Fetch movements for period 1
+      const { data: movements1, error: error1 } = await supabase
+        .from("stock_movements")
+        .select("*")
+        .eq("company_id", companyId)
+        .gte("created_at", `${period1Start}T00:00:00`)
+        .lte("created_at", `${period1End}T23:59:59`);
+
+      // Fetch movements for period 2
+      const { data: movements2, error: error2 } = await supabase
+        .from("stock_movements")
+        .select("*")
+        .eq("company_id", companyId)
+        .gte("created_at", `${period2Start}T00:00:00`)
+        .lte("created_at", `${period2End}T23:59:59`);
+
+      if (error1 || error2) {
+        console.error("Error fetching comparison data:", error1 || error2);
+        toast.error("حدث خطأ أثناء جلب بيانات المقارنة");
+        return;
+      }
+
+      // Calculate net change for each product in each period
+      const productChanges: { [productId: string]: { period1: number; period2: number } } = {};
+      
+      products.forEach(p => {
+        productChanges[p.id] = { period1: 0, period2: 0 };
+      });
+
+      // Process period 1 movements
+      (movements1 || []).forEach(m => {
+        if (!productChanges[m.product_id]) {
+          productChanges[m.product_id] = { period1: 0, period2: 0 };
+        }
+        if (m.movement_type === "in" || m.movement_type === "purchase" || m.movement_type === "adjustment_add") {
+          productChanges[m.product_id].period1 += m.quantity;
+        } else {
+          productChanges[m.product_id].period1 -= m.quantity;
+        }
+      });
+
+      // Process period 2 movements
+      (movements2 || []).forEach(m => {
+        if (!productChanges[m.product_id]) {
+          productChanges[m.product_id] = { period1: 0, period2: 0 };
+        }
+        if (m.movement_type === "in" || m.movement_type === "purchase" || m.movement_type === "adjustment_add") {
+          productChanges[m.product_id].period2 += m.quantity;
+        } else {
+          productChanges[m.product_id].period2 -= m.quantity;
+        }
+      });
+
+      // Build comparison data
+      const comparison: ComparisonData[] = products.map(p => {
+        const changes = productChanges[p.id] || { period1: 0, period2: 0 };
+        const difference = changes.period2 - changes.period1;
+        const percentChange = changes.period1 !== 0 
+          ? ((changes.period2 - changes.period1) / Math.abs(changes.period1)) * 100 
+          : (changes.period2 !== 0 ? 100 : 0);
+        
+        return {
+          productId: p.id,
+          productName: p.name_ar || p.name,
+          period1Quantity: changes.period1,
+          period2Quantity: changes.period2,
+          difference,
+          percentChange,
+        };
+      }).filter(c => c.period1Quantity !== 0 || c.period2Quantity !== 0)
+        .sort((a, b) => Math.abs(b.difference) - Math.abs(a.difference));
+
+      setComparisonData(comparison);
+
+      // Calculate summary
+      const summary = {
+        increased: comparison.filter(c => c.difference > 0).length,
+        decreased: comparison.filter(c => c.difference < 0).length,
+        unchanged: comparison.filter(c => c.difference === 0).length,
+        totalDifference: comparison.reduce((sum, c) => sum + c.difference, 0),
+      };
+      setComparisonSummary(summary);
+
+      toast.success("تم تحميل بيانات المقارنة بنجاح");
+    } catch (error) {
+      console.error("Error in comparison:", error);
+      toast.error("حدث خطأ أثناء المقارنة");
+    } finally {
+      setComparisonLoading(false);
+    }
   };
 
   const getFilteredProducts = () => {
@@ -613,6 +744,211 @@ const InventoryReport = () => {
               <p className="text-center text-muted-foreground mt-4">
                 يتم عرض أول 20 منتج من أصل {getFilteredProducts().length}
               </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Inventory Comparison Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <Button 
+                onClick={fetchComparisonData} 
+                disabled={comparisonLoading}
+                className="gap-2"
+              >
+                {comparisonLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <GitCompare className="w-4 h-4" />
+                )}
+                مقارنة الفترات
+              </Button>
+              <CardTitle className="text-right flex items-center gap-2">
+                <GitCompare className="w-5 h-5 text-primary" />
+                مقارنة المخزون بين فترتين
+              </CardTitle>
+            </div>
+            <CardDescription className="text-right">
+              قارن صافي حركة المخزون (الوارد - الصادر) بين فترتين زمنيتين مختلفتين
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Date Range Selectors */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Period 1 */}
+              <div className="p-4 rounded-lg border border-border bg-muted/30">
+                <div className="flex items-center gap-2 mb-4 justify-end">
+                  <h4 className="font-semibold">الفترة الأولى</h4>
+                  <Calendar className="w-4 h-4 text-primary" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="period1-end" className="text-right block">إلى</Label>
+                    <Input
+                      id="period1-end"
+                      type="date"
+                      value={period1End}
+                      onChange={(e) => setPeriod1End(e.target.value)}
+                      className="text-right"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="period1-start" className="text-right block">من</Label>
+                    <Input
+                      id="period1-start"
+                      type="date"
+                      value={period1Start}
+                      onChange={(e) => setPeriod1Start(e.target.value)}
+                      className="text-right"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Period 2 */}
+              <div className="p-4 rounded-lg border border-primary/30 bg-primary/5">
+                <div className="flex items-center gap-2 mb-4 justify-end">
+                  <h4 className="font-semibold">الفترة الثانية</h4>
+                  <Calendar className="w-4 h-4 text-primary" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="period2-end" className="text-right block">إلى</Label>
+                    <Input
+                      id="period2-end"
+                      type="date"
+                      value={period2End}
+                      onChange={(e) => setPeriod2End(e.target.value)}
+                      className="text-right"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="period2-start" className="text-right block">من</Label>
+                    <Input
+                      id="period2-start"
+                      type="date"
+                      value={period2Start}
+                      onChange={(e) => setPeriod2Start(e.target.value)}
+                      className="text-right"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Comparison Summary */}
+            {comparisonData.length > 0 && (
+              <>
+                <div className="grid grid-cols-4 gap-4">
+                  <Card className="bg-emerald-500/10 border-emerald-500/30">
+                    <CardContent className="pt-4 text-center">
+                      <ArrowUp className="w-6 h-6 mx-auto mb-2 text-emerald-600" />
+                      <p className="text-sm text-muted-foreground">زيادة في الحركة</p>
+                      <p className="text-2xl font-bold text-emerald-600">{comparisonSummary.increased}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-red-500/10 border-red-500/30">
+                    <CardContent className="pt-4 text-center">
+                      <ArrowDown className="w-6 h-6 mx-auto mb-2 text-red-600" />
+                      <p className="text-sm text-muted-foreground">انخفاض في الحركة</p>
+                      <p className="text-2xl font-bold text-red-600">{comparisonSummary.decreased}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-muted border-border">
+                    <CardContent className="pt-4 text-center">
+                      <Minus className="w-6 h-6 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">بدون تغيير</p>
+                      <p className="text-2xl font-bold">{comparisonSummary.unchanged}</p>
+                    </CardContent>
+                  </Card>
+                  <Card className={`${comparisonSummary.totalDifference >= 0 ? "bg-emerald-500/10 border-emerald-500/30" : "bg-red-500/10 border-red-500/30"}`}>
+                    <CardContent className="pt-4 text-center">
+                      {comparisonSummary.totalDifference >= 0 ? (
+                        <TrendingUp className="w-6 h-6 mx-auto mb-2 text-emerald-600" />
+                      ) : (
+                        <TrendingDown className="w-6 h-6 mx-auto mb-2 text-red-600" />
+                      )}
+                      <p className="text-sm text-muted-foreground">إجمالي الفرق</p>
+                      <p className={`text-2xl font-bold ${comparisonSummary.totalDifference >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                        {comparisonSummary.totalDifference > 0 ? "+" : ""}{comparisonSummary.totalDifference}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Comparison Chart */}
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={comparisonData.slice(0, 15)} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis dataKey="productName" type="category" width={120} />
+                      <Tooltip 
+                        formatter={(value: number, name: string) => [
+                          value,
+                          name === "period1Quantity" ? "الفترة الأولى" : name === "period2Quantity" ? "الفترة الثانية" : "الفرق"
+                        ]}
+                      />
+                      <Legend 
+                        formatter={(value) => 
+                          value === "period1Quantity" ? "الفترة الأولى" : value === "period2Quantity" ? "الفترة الثانية" : value
+                        }
+                      />
+                      <Bar dataKey="period1Quantity" name="period1Quantity" fill="#94a3b8" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="period2Quantity" name="period2Quantity" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Comparison Table */}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-center">التغيير %</TableHead>
+                      <TableHead className="text-center">الفرق</TableHead>
+                      <TableHead className="text-center">الفترة الثانية</TableHead>
+                      <TableHead className="text-center">الفترة الأولى</TableHead>
+                      <TableHead className="text-right">المنتج</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {comparisonData.slice(0, 20).map((item) => (
+                      <TableRow key={item.productId}>
+                        <TableCell className="text-center">
+                          <Badge 
+                            variant={item.percentChange > 0 ? "default" : item.percentChange < 0 ? "destructive" : "secondary"}
+                            className={item.percentChange > 0 ? "bg-emerald-500/20 text-emerald-600 border-0" : ""}
+                          >
+                            {item.percentChange > 0 ? "+" : ""}{item.percentChange.toFixed(1)}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell className={`text-center font-bold ${item.difference > 0 ? "text-emerald-600" : item.difference < 0 ? "text-red-600" : ""}`}>
+                          <span className="flex items-center justify-center gap-1">
+                            {item.difference > 0 ? <ArrowUp className="w-3 h-3" /> : item.difference < 0 ? <ArrowDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                            {item.difference > 0 ? "+" : ""}{item.difference}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center font-medium">{item.period2Quantity}</TableCell>
+                        <TableCell className="text-center">{item.period1Quantity}</TableCell>
+                        <TableCell className="text-right font-medium">{item.productName}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {comparisonData.length > 20 && (
+                  <p className="text-center text-muted-foreground mt-4">
+                    يتم عرض أول 20 منتج من أصل {comparisonData.length}
+                  </p>
+                )}
+              </>
+            )}
+
+            {comparisonData.length === 0 && !comparisonLoading && (
+              <div className="text-center py-12 text-muted-foreground">
+                <GitCompare className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>اختر الفترات المراد مقارنتها واضغط على زر "مقارنة الفترات"</p>
+              </div>
             )}
           </CardContent>
         </Card>
