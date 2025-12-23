@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.process-scheduled-alerts]
 verify_jwt = false
+
+[functions.check-movement-changes]
+verify_jwt = false
