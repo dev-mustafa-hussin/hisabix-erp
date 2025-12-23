@@ -31,7 +31,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Trash2, FileText, Eye, Printer } from "lucide-react";
+import { Plus, Trash2, FileText, Eye, Printer, CreditCard, History } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -80,6 +80,16 @@ interface InvoiceItem {
   total: number;
 }
 
+interface Payment {
+  id: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  reference_number: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 const Invoices = () => {
   const { user } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -88,9 +98,18 @@ const Invoices = () => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isPaymentsHistoryOpen, setIsPaymentsHistoryOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
+  const [invoicePayments, setInvoicePayments] = useState<Payment[]>([]);
   const [companyId, setCompanyId] = useState<string | null>(null);
+
+  // Payment form state
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [paymentReference, setPaymentReference] = useState<string>("");
+  const [paymentNotes, setPaymentNotes] = useState<string>("");
 
   // Form state
   const [invoiceNumber, setInvoiceNumber] = useState<string>("");
@@ -385,6 +404,113 @@ const Invoices = () => {
     setIsViewDialogOpen(true);
   };
 
+  const fetchInvoicePayments = async (invoiceId: string) => {
+    const { data, error } = await supabase
+      .from("payments")
+      .select("*")
+      .eq("invoice_id", invoiceId)
+      .order("payment_date", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching payments:", error);
+    } else {
+      setInvoicePayments(data || []);
+    }
+  };
+
+  const openPaymentDialog = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    const remaining = invoice.total - invoice.paid_amount;
+    setPaymentAmount(remaining > 0 ? remaining : 0);
+    setPaymentMethod("cash");
+    setPaymentReference("");
+    setPaymentNotes("");
+    setIsPaymentDialogOpen(true);
+  };
+
+  const openPaymentsHistory = async (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    await fetchInvoicePayments(invoice.id);
+    setIsPaymentsHistoryOpen(true);
+  };
+
+  const handleAddPayment = async () => {
+    if (!selectedInvoice || !companyId || !user) return;
+
+    if (paymentAmount <= 0) {
+      toast.error("يرجى إدخال مبلغ صحيح");
+      return;
+    }
+
+    const remaining = selectedInvoice.total - selectedInvoice.paid_amount;
+    if (paymentAmount > remaining) {
+      toast.error("المبلغ أكبر من المستحق");
+      return;
+    }
+
+    // Insert payment
+    const { error: paymentError } = await supabase
+      .from("payments")
+      .insert({
+        company_id: companyId,
+        user_id: user.id,
+        invoice_id: selectedInvoice.id,
+        customer_id: selectedInvoice.customer_id,
+        amount: paymentAmount,
+        payment_method: paymentMethod as "cash" | "card" | "bank_transfer" | "check",
+        reference_number: paymentReference || null,
+        notes: paymentNotes || null,
+        payment_date: new Date().toISOString(),
+      });
+
+    if (paymentError) {
+      console.error("Error adding payment:", paymentError);
+      toast.error("حدث خطأ في تسجيل الدفعة");
+      return;
+    }
+
+    // Update invoice paid_amount and status
+    const newPaidAmount = selectedInvoice.paid_amount + paymentAmount;
+    let newStatus: "draft" | "sent" | "paid" | "overdue" | "cancelled" = selectedInvoice.status as "draft" | "sent" | "paid" | "overdue" | "cancelled";
+    
+    if (newPaidAmount >= selectedInvoice.total) {
+      newStatus = "paid";
+    }
+
+    const { error: updateError } = await supabase
+      .from("invoices")
+      .update({
+        paid_amount: newPaidAmount,
+        status: newStatus,
+      })
+      .eq("id", selectedInvoice.id);
+
+    if (updateError) {
+      console.error("Error updating invoice:", updateError);
+      toast.error("حدث خطأ في تحديث الفاتورة");
+      return;
+    }
+
+    toast.success("تم تسجيل الدفعة بنجاح");
+    setIsPaymentDialogOpen(false);
+    fetchInvoices();
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    switch (method) {
+      case "cash":
+        return "نقداً";
+      case "card":
+        return "بطاقة";
+      case "bank_transfer":
+        return "تحويل بنكي";
+      case "check":
+        return "شيك";
+      default:
+        return method;
+    }
+  };
+
   const { subtotal, discountAmount, taxAmount, total } = calculateTotals();
 
   const getStatusBadge = (status: string) => {
@@ -623,6 +749,7 @@ const Invoices = () => {
                   <TableHead>التاريخ</TableHead>
                   <TableHead>العميل</TableHead>
                   <TableHead>الإجمالي</TableHead>
+                  <TableHead>المدفوع</TableHead>
                   <TableHead>الحالة</TableHead>
                   <TableHead>إجراءات</TableHead>
                 </TableRow>
@@ -630,13 +757,13 @@ const Invoices = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={7} className="text-center py-8">
                       جاري التحميل...
                     </TableCell>
                   </TableRow>
                 ) : invoices.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       لا توجد فواتير
                     </TableCell>
                   </TableRow>
@@ -650,6 +777,12 @@ const Invoices = () => {
                       <TableCell>{invoice.customer?.name || "-"}</TableCell>
                       <TableCell>{invoice.total?.toFixed(2)} جنيه</TableCell>
                       <TableCell>
+                        <div className="text-sm">
+                          <span className="text-green-600">{invoice.paid_amount?.toFixed(2)}</span>
+                          <span className="text-muted-foreground"> / {invoice.total?.toFixed(2)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <Select
                           value={invoice.status}
                           onValueChange={(value) => handleStatusChange(invoice.id, value as "draft" | "sent" | "paid" | "overdue" | "cancelled")}
@@ -661,25 +794,43 @@ const Invoices = () => {
                             <SelectItem value="draft">مسودة</SelectItem>
                             <SelectItem value="sent">مرسلة</SelectItem>
                             <SelectItem value="paid">مدفوعة</SelectItem>
-                            <SelectItem value="partial">مدفوعة جزئياً</SelectItem>
                             <SelectItem value="overdue">متأخرة</SelectItem>
                             <SelectItem value="cancelled">ملغاة</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => viewInvoice(invoice)}
+                            title="عرض"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => openPaymentDialog(invoice)}
+                            title="تسجيل دفعة"
+                            disabled={invoice.status === "paid" || invoice.status === "cancelled"}
+                          >
+                            <CreditCard className="w-4 h-4 text-green-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openPaymentsHistory(invoice)}
+                            title="سجل المدفوعات"
+                          >
+                            <History className="w-4 h-4 text-blue-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleDelete(invoice.id)}
+                            title="حذف"
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
@@ -796,6 +947,168 @@ const Invoices = () => {
                       <p>{selectedInvoice.notes}</p>
                     </div>
                   )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Payment Dialog */}
+          <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  تسجيل دفعة جديدة
+                </DialogTitle>
+              </DialogHeader>
+              {selectedInvoice && (
+                <div className="space-y-4">
+                  <div className="bg-muted p-4 rounded-lg space-y-2">
+                    <div className="flex justify-between">
+                      <span>رقم الفاتورة:</span>
+                      <span className="font-medium">{selectedInvoice.invoice_number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>إجمالي الفاتورة:</span>
+                      <span>{selectedInvoice.total?.toFixed(2)} جنيه</span>
+                    </div>
+                    <div className="flex justify-between text-green-600">
+                      <span>المدفوع:</span>
+                      <span>{selectedInvoice.paid_amount?.toFixed(2)} جنيه</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-destructive">
+                      <span>المتبقي:</span>
+                      <span>{(selectedInvoice.total - selectedInvoice.paid_amount)?.toFixed(2)} جنيه</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>المبلغ</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max={selectedInvoice.total - selectedInvoice.paid_amount}
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>طريقة الدفع</Label>
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">نقداً</SelectItem>
+                        <SelectItem value="card">بطاقة</SelectItem>
+                        <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
+                        <SelectItem value="check">شيك</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>رقم المرجع (اختياري)</Label>
+                    <Input
+                      value={paymentReference}
+                      onChange={(e) => setPaymentReference(e.target.value)}
+                      placeholder="رقم الشيك / التحويل..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>ملاحظات (اختياري)</Label>
+                    <Textarea
+                      value={paymentNotes}
+                      onChange={(e) => setPaymentNotes(e.target.value)}
+                      placeholder="ملاحظات..."
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+                      إلغاء
+                    </Button>
+                    <Button onClick={handleAddPayment}>
+                      <CreditCard className="w-4 h-4 ml-2" />
+                      تسجيل الدفعة
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Payments History Dialog */}
+          <Dialog open={isPaymentsHistoryOpen} onOpenChange={setIsPaymentsHistoryOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <History className="w-5 h-5" />
+                  سجل المدفوعات
+                  {selectedInvoice && ` - ${selectedInvoice.invoice_number}`}
+                </DialogTitle>
+              </DialogHeader>
+              {selectedInvoice && (
+                <div className="space-y-4">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-sm text-muted-foreground">إجمالي الفاتورة</p>
+                        <p className="text-lg font-bold">{selectedInvoice.total?.toFixed(2)} جنيه</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">المدفوع</p>
+                        <p className="text-lg font-bold text-green-600">{selectedInvoice.paid_amount?.toFixed(2)} جنيه</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">المتبقي</p>
+                        <p className="text-lg font-bold text-destructive">
+                          {(selectedInvoice.total - selectedInvoice.paid_amount)?.toFixed(2)} جنيه
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {invoicePayments.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      لا توجد مدفوعات مسجلة
+                    </p>
+                  ) : (
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>التاريخ</TableHead>
+                            <TableHead>المبلغ</TableHead>
+                            <TableHead>طريقة الدفع</TableHead>
+                            <TableHead>المرجع</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {invoicePayments.map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell>
+                                {format(new Date(payment.payment_date), "dd/MM/yyyy HH:mm", { locale: ar })}
+                              </TableCell>
+                              <TableCell className="font-medium text-green-600">
+                                {payment.amount?.toFixed(2)} جنيه
+                              </TableCell>
+                              <TableCell>{getPaymentMethodLabel(payment.payment_method)}</TableCell>
+                              <TableCell>{payment.reference_number || "-"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <Button variant="outline" onClick={() => setIsPaymentsHistoryOpen(false)}>
+                      إغلاق
+                    </Button>
+                  </div>
                 </div>
               )}
             </DialogContent>
