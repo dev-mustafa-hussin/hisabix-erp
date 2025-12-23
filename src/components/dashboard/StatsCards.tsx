@@ -61,10 +61,10 @@ const stats = [
 
 const StatsCards = () => {
   return (
-    <div className="bg-card rounded-xl p-4 lg:p-6 shadow-sm border border-border">
+    <div className="bg-card rounded-xl p-4 lg:p-6 shadow-sm border border-border transition-colors duration-300 animate-fade-in" style={{ animationDelay: "100ms" }}>
       <div className="flex items-center justify-between mb-4">
         <p className="text-xs lg:text-sm text-muted-foreground flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-destructive" />
+          <AlertTriangle className="w-4 h-4 text-destructive animate-pulse" />
           <span className="hidden sm:inline">تنبيه: قم بأخذ نسخة احتياطية من البيانات بشكل دوري</span>
           <span className="sm:hidden">تنبيه مهم</span>
         </p>
@@ -75,9 +75,10 @@ const StatsCards = () => {
           return (
             <div
               key={index}
-              className="flex items-center gap-2 lg:gap-3 p-3 lg:p-4 bg-muted/30 rounded-xl"
+              style={{ animationDelay: `${150 + index * 50}ms` }}
+              className="flex items-center gap-2 lg:gap-3 p-3 lg:p-4 bg-muted/30 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:bg-muted/50 animate-fade-in-scale opacity-0 cursor-pointer"
             >
-              <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
+              <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:rotate-12`}>
                 <Icon className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
               </div>
               <div className="text-left min-w-0 flex-1">
@@ -85,7 +86,7 @@ const StatsCards = () => {
                 <p className="text-sm lg:text-lg font-semibold text-card-foreground">{stat.value}</p>
               </div>
               {stat.trend === "up" ? (
-                <TrendingUp className="w-3 h-3 lg:w-4 lg:h-4 text-success flex-shrink-0" />
+                <TrendingUp className="w-3 h-3 lg:w-4 lg:h-4 text-success flex-shrink-0 animate-bounce" style={{ animationDuration: "2s" }} />
               ) : (
                 <TrendingDown className="w-3 h-3 lg:w-4 lg:h-4 text-destructive flex-shrink-0" />
               )}

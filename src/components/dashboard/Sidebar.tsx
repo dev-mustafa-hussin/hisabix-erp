@@ -104,13 +104,13 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
       {/* Logo */}
       <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center transition-transform duration-300 hover:rotate-12">
             <span className="text-primary-foreground font-bold text-sm">E</span>
           </div>
           <span className="font-bold text-sidebar-foreground">EDOXO</span>
         </div>
         {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
+          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden transition-transform duration-200 hover:rotate-90">
             <X className="w-5 h-5" />
           </Button>
         )}
@@ -124,24 +124,24 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           const isExpanded = expandedMenus.includes(item.label);
 
           return (
-            <div key={index}>
+            <div key={index} style={{ animationDelay: `${index * 30}ms` }} className="animate-fade-in opacity-0">
               {item.hasSubmenu ? (
                 <button
                   onClick={() => toggleSubmenu(item.label)}
                   className={cn(
-                    "w-full flex items-center justify-between px-4 py-2.5 rounded-lg mb-1 transition-colors text-sm",
+                    "w-full flex items-center justify-between px-4 py-2.5 rounded-lg mb-1 transition-all duration-200 text-sm group hover:translate-x-1",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-primary font-medium"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
                     <span>{item.label}</span>
                   </div>
                   <ChevronDown
                     className={cn(
-                      "w-4 h-4 transition-transform",
+                      "w-4 h-4 transition-transform duration-300",
                       isExpanded && "rotate-180"
                     )}
                   />
@@ -151,35 +151,40 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
                   to={item.href}
                   onClick={onClose}
                   className={cn(
-                    "flex items-center justify-between px-4 py-2.5 rounded-lg mb-1 transition-colors text-sm",
+                    "flex items-center justify-between px-4 py-2.5 rounded-lg mb-1 transition-all duration-200 text-sm group hover:translate-x-1",
                     isActive
-                      ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                      ? "bg-sidebar-accent text-sidebar-primary font-medium shadow-sm"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5" />
+                    <Icon className={cn("w-5 h-5 transition-transform duration-200 group-hover:scale-110", isActive && "animate-bounce-in")} />
                     <span>{item.label}</span>
                   </div>
                 </Link>
               )}
 
-              {/* Submenu */}
-              {item.hasSubmenu && isExpanded && item.submenu && (
-                <div className="mr-6 border-r border-sidebar-border pr-2 mb-2">
-                  {item.submenu.map((subItem, subIndex) => (
-                    <Link
-                      key={subIndex}
-                      to={subItem.href}
-                      onClick={onClose}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-lg"
-                    >
-                      <ChevronLeft className="w-3 h-3" />
-                      <span>{subItem.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              {/* Submenu with animation */}
+              <div className={cn(
+                "overflow-hidden transition-all duration-300",
+                item.hasSubmenu && isExpanded ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+              )}>
+                {item.hasSubmenu && item.submenu && (
+                  <div className="mr-6 border-r border-sidebar-border pr-2 mb-2">
+                    {item.submenu.map((subItem, subIndex) => (
+                      <Link
+                        key={subIndex}
+                        to={subItem.href}
+                        onClick={onClose}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-lg transition-all duration-200 hover:translate-x-1"
+                      >
+                        <ChevronLeft className="w-3 h-3" />
+                        <span>{subItem.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
@@ -195,7 +200,7 @@ export const MobileSidebarTrigger = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="lg:hidden">
+        <Button variant="ghost" size="icon" className="lg:hidden transition-transform duration-200 hover:scale-110">
           <Menu className="w-6 h-6" />
         </Button>
       </SheetTrigger>
@@ -208,7 +213,7 @@ export const MobileSidebarTrigger = () => {
 
 const Sidebar = () => {
   return (
-    <aside className="w-64 bg-sidebar h-screen fixed right-0 top-0 border-l border-sidebar-border overflow-y-auto hidden lg:block">
+    <aside className="w-64 bg-sidebar h-screen fixed right-0 top-0 border-l border-sidebar-border overflow-y-auto hidden lg:block transition-colors duration-300">
       <SidebarContent />
     </aside>
   );
