@@ -31,9 +31,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Trash2, FileText, Eye, Printer, CreditCard, History } from "lucide-react";
+import { Plus, Trash2, FileText, Eye, Printer, CreditCard, History, Download, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { exportInvoiceToPDF } from "@/utils/pdfExport";
 
 interface Invoice {
   id: string;
@@ -511,6 +512,77 @@ const Invoices = () => {
     }
   };
 
+  const handleExportPDF = async (invoice: Invoice) => {
+    // Fetch invoice items
+    const { data: items } = await supabase
+      .from("invoice_items")
+      .select("*, product:products(name)")
+      .eq("invoice_id", invoice.id);
+
+    // Fetch company name
+    const { data: company } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", companyId)
+      .maybeSingle();
+
+    exportInvoiceToPDF({
+      invoice_number: invoice.invoice_number,
+      invoice_date: format(new Date(invoice.invoice_date), "dd/MM/yyyy"),
+      due_date: invoice.due_date ? format(new Date(invoice.due_date), "dd/MM/yyyy") : null,
+      customer_name: invoice.customer?.name || "Cash Customer",
+      company_name: company?.name || "EDOXO",
+      items: (items || []).map((item: any) => ({
+        name: item.product?.name || item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total: item.total,
+      })),
+      subtotal: invoice.subtotal,
+      discount_rate: invoice.discount_rate,
+      discount_amount: invoice.discount_amount,
+      tax_rate: invoice.tax_rate,
+      tax_amount: invoice.tax_amount,
+      total: invoice.total,
+      paid_amount: invoice.paid_amount,
+      notes: invoice.notes,
+    });
+
+    toast.success("تم تصدير الفاتورة إلى PDF");
+  };
+
+  const handleSendReminder = async (invoice: Invoice) => {
+    if (!invoice.customer_id) {
+      toast.error("لا يوجد عميل مرتبط بهذه الفاتورة");
+      return;
+    }
+
+    toast.loading("جاري إرسال التذكير...");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-invoice-reminder", {
+        body: { invoiceId: invoice.id },
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.sent > 0) {
+        toast.dismiss();
+        toast.success("تم إرسال التذكير بنجاح");
+      } else if (data.results?.[0]?.error) {
+        toast.dismiss();
+        toast.error(data.results[0].error);
+      } else {
+        toast.dismiss();
+        toast.error("فشل إرسال التذكير");
+      }
+    } catch (error: any) {
+      toast.dismiss();
+      toast.error("حدث خطأ في إرسال التذكير");
+      console.error(error);
+    }
+  };
+
   const { subtotal, discountAmount, taxAmount, total } = calculateTotals();
 
   const getStatusBadge = (status: string) => {
@@ -812,6 +884,14 @@ const Invoices = () => {
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => handleExportPDF(invoice)}
+                            title="تصدير PDF"
+                          >
+                            <Download className="w-4 h-4 text-primary" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => openPaymentDialog(invoice)}
                             title="تسجيل دفعة"
                             disabled={invoice.status === "paid" || invoice.status === "cancelled"}
@@ -826,6 +906,16 @@ const Invoices = () => {
                           >
                             <History className="w-4 h-4 text-blue-600" />
                           </Button>
+                          {invoice.status === "overdue" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleSendReminder(invoice)}
+                              title="إرسال تذكير"
+                            >
+                              <Mail className="w-4 h-4 text-orange-500" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
