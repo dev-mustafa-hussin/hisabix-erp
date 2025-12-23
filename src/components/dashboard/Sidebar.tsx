@@ -48,44 +48,48 @@ const menuItems: MenuItem[] = [
   { icon: PieChart, label: "تقرير المخزون", href: "/inventory-report" },
   { icon: CreditCard, label: "المستحقات", href: "/receivables" },
   { icon: FileText, label: "الفواتير", href: "/invoices" },
-  { 
-    icon: ShoppingCart, 
-    label: "المشتريات", 
-    href: "#", 
+  {
+    icon: ShoppingCart,
+    label: "المشتريات",
+    href: "#",
     hasSubmenu: true,
     submenu: [
       { label: "فاتورة مشتريات", href: "#" },
       { label: "مرتجع مشتريات", href: "#" },
-    ]
+    ],
   },
   { icon: Store, label: "المبيعات", href: "/sales" },
   { icon: Receipt, label: "المصروفات", href: "#" },
-  { 
-    icon: Truck, 
-    label: "إدارة المشتريات", 
-    href: "#", 
+  {
+    icon: Truck,
+    label: "إدارة المشتريات",
+    href: "#",
     hasSubmenu: true,
     submenu: [
       { label: "طلبات الشراء", href: "#" },
       { label: "الموردين", href: "#" },
-    ]
+    ],
   },
   { icon: Calculator, label: "التقارير", href: "/reports" },
   { icon: FileBox, label: "نماذج الإشعارات", href: "#" },
   { icon: BarChart3, label: "إدارة الترويج المخزني", href: "#" },
-  { 
-    icon: Store, 
-    label: "المتجر الإلكتروني", 
-    href: "#", 
+  {
+    icon: Store,
+    label: "المتجر الإلكتروني",
+    href: "#",
     hasSubmenu: true,
     submenu: [
-      { label: "إعدادات المتجر", href: "#" },
-      { label: "المنتجات", href: "#" },
-    ]
+      { label: "إعدادات المتجر", href: "/online-store-settings" },
+      { label: "عرض المتجر", href: "#" },
+    ],
   },
   { icon: Settings, label: "إعدادات الشركة", href: "/company-settings" },
   { icon: Bell, label: "إعدادات الإشعارات", href: "/notification-settings" },
-  { icon: BarChart2, label: "لوحة تحكم الإشعارات", href: "/notifications-dashboard" },
+  {
+    icon: BarChart2,
+    label: "لوحة تحكم الإشعارات",
+    href: "/notifications-dashboard",
+  },
   { icon: History, label: "سجل الإشعارات", href: "/notification-logs" },
 ];
 
@@ -110,7 +114,12 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           <span className="font-bold text-sidebar-foreground">EDOXO</span>
         </div>
         {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden transition-transform duration-200 hover:rotate-90">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="lg:hidden transition-transform duration-200 hover:rotate-90"
+          >
             <X className="w-5 h-5" />
           </Button>
         )}
@@ -124,7 +133,11 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           const isExpanded = expandedMenus.includes(item.label);
 
           return (
-            <div key={index} style={{ animationDelay: `${index * 30}ms` }} className="animate-fade-in opacity-0">
+            <div
+              key={index}
+              style={{ animationDelay: `${index * 30}ms` }}
+              className="animate-fade-in opacity-0"
+            >
               {item.hasSubmenu ? (
                 <button
                   onClick={() => toggleSubmenu(item.label)}
@@ -158,17 +171,26 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={cn("w-5 h-5 transition-transform duration-200 group-hover:scale-110", isActive && "animate-bounce-in")} />
+                    <Icon
+                      className={cn(
+                        "w-5 h-5 transition-transform duration-200 group-hover:scale-110",
+                        isActive && "animate-bounce-in"
+                      )}
+                    />
                     <span>{item.label}</span>
                   </div>
                 </Link>
               )}
 
               {/* Submenu with animation */}
-              <div className={cn(
-                "overflow-hidden transition-all duration-300",
-                item.hasSubmenu && isExpanded ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
-              )}>
+              <div
+                className={cn(
+                  "overflow-hidden transition-all duration-300",
+                  item.hasSubmenu && isExpanded
+                    ? "max-h-40 opacity-100"
+                    : "max-h-0 opacity-0"
+                )}
+              >
                 {item.hasSubmenu && item.submenu && (
                   <div className="mr-6 border-r border-sidebar-border pr-2 mb-2">
                     {item.submenu.map((subItem, subIndex) => (
@@ -200,7 +222,11 @@ export const MobileSidebarTrigger = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="lg:hidden transition-transform duration-200 hover:scale-110">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden transition-transform duration-200 hover:scale-110"
+        >
           <Menu className="w-6 h-6" />
         </Button>
       </SheetTrigger>
