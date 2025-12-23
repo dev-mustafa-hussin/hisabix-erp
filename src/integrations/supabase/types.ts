@@ -389,6 +389,9 @@ export type Database = {
           is_active: boolean
           last_checked_at: string | null
           recipient_email: string | null
+          schedule_day: number | null
+          schedule_hour: number
+          schedule_type: string
           threshold_percent: number
           updated_at: string
         }
@@ -400,6 +403,9 @@ export type Database = {
           is_active?: boolean
           last_checked_at?: string | null
           recipient_email?: string | null
+          schedule_day?: number | null
+          schedule_hour?: number
+          schedule_type?: string
           threshold_percent?: number
           updated_at?: string
         }
@@ -411,6 +417,9 @@ export type Database = {
           is_active?: boolean
           last_checked_at?: string | null
           recipient_email?: string | null
+          schedule_day?: number | null
+          schedule_hour?: number
+          schedule_type?: string
           threshold_percent?: number
           updated_at?: string
         }
