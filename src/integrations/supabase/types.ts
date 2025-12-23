@@ -380,6 +380,50 @@ export type Database = {
           },
         ]
       }
+      notification_logs: {
+        Row: {
+          company_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          notification_type: string
+          recipient_email: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_type: string
+          recipient_email: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          recipient_email?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number

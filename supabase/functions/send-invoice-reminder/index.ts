@@ -34,7 +34,6 @@ const defaultBodyHtml = `<h1 style="color: #dc2626; text-align: center;">⚠️ 
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-invoice-reminder function called");
 
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -49,23 +48,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     let invoices = [];
     let templateData = null;
+    let targetCompanyId = companyId;
 
     if (invoiceId) {
-      // Send reminder for specific invoice
       const { data, error } = await supabase
         .from("invoices")
-        .select(`
-          *,
-          customer:customers(name, email),
-          company:companies(name, email)
-        `)
+        .select(`*, customer:customers(name, email), company:companies(name, email)`)
         .eq("id", invoiceId)
         .single();
 
       if (error) throw error;
       if (data) {
         invoices = [data];
-        // Get template for this company
+        targetCompanyId = data.company_id;
         const { data: template } = await supabase
           .from("email_templates")
           .select("subject, body_html")
@@ -76,14 +71,9 @@ const handler = async (req: Request): Promise<Response> => {
         templateData = template;
       }
     } else if (companyId && sendAll) {
-      // Send reminders for all overdue invoices
       const { data, error } = await supabase
         .from("invoices")
-        .select(`
-          *,
-          customer:customers(name, email),
-          company:companies(name, email)
-        `)
+        .select(`*, customer:customers(name, email), company:companies(name, email)`)
         .eq("company_id", companyId)
         .eq("status", "overdue")
         .not("customer_id", "is", null);
@@ -91,7 +81,6 @@ const handler = async (req: Request): Promise<Response> => {
       if (error) throw error;
       invoices = data || [];
 
-      // Get template for this company
       const { data: template } = await supabase
         .from("email_templates")
         .select("subject, body_html")
@@ -106,7 +95,6 @@ const handler = async (req: Request): Promise<Response> => {
     const emailBodyTemplate = templateData?.body_html || defaultBodyHtml;
 
     console.log(`Found ${invoices.length} invoices to send reminders for`);
-    console.log(`Using ${templateData ? 'custom' : 'default'} email template`);
 
     const results = [];
 
@@ -118,19 +106,12 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (!customerEmail) {
         console.log(`Skipping invoice ${invoice.invoice_number} - no customer email`);
-        results.push({
-          invoiceId: invoice.id,
-          success: false,
-          error: "لا يوجد بريد إلكتروني للعميل",
-        });
+        results.push({ invoiceId: invoice.id, success: false, error: "لا يوجد بريد إلكتروني للعميل" });
         continue;
       }
 
-      const dueDate = invoice.due_date
-        ? new Date(invoice.due_date).toLocaleDateString("ar-EG")
-        : "غير محدد";
+      const dueDate = invoice.due_date ? new Date(invoice.due_date).toLocaleDateString("ar-EG") : "غير محدد";
 
-      // Replace template variables
       const finalSubject = emailSubject
         .replace(/\{\{customer_name\}\}/g, customerName)
         .replace(/\{\{company_name\}\}/g, companyName)
@@ -149,11 +130,9 @@ const handler = async (req: Request): Promise<Response> => {
         .replace(/\{\{paid_amount\}\}/g, invoice.paid_amount.toFixed(2))
         .replace(/\{\{remaining\}\}/g, remaining.toFixed(2));
 
-      const emailHtml = `
-        <!DOCTYPE html>
+      const emailHtml = `<!DOCTYPE html>
         <html dir="rtl" lang="ar">
-        <head>
-          <meta charset="UTF-8">
+        <head><meta charset="UTF-8">
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.8; color: #333; direction: rtl; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -163,16 +142,14 @@ const handler = async (req: Request): Promise<Response> => {
         </head>
         <body>
           <div class="container">
-            <div class="content">
-              ${finalBody}
-            </div>
-            <div class="footer">
-              <p>هذه رسالة تذكير آلية. للاستفسار يرجى التواصل مع قسم المحاسبة.</p>
-            </div>
+            <div class="content">${finalBody}</div>
+            <div class="footer"><p>هذه رسالة تذكير آلية. للاستفسار يرجى التواصل مع قسم المحاسبة.</p></div>
           </div>
         </body>
-        </html>
-      `;
+        </html>`;
+
+      let emailStatus = 'sent';
+      let errorMessage = null;
 
       try {
         const emailResponse = await resend.emails.send({
@@ -183,21 +160,30 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         console.log("Email sent successfully:", emailResponse);
-        results.push({
-          invoiceId: invoice.id,
-          invoiceNumber: invoice.invoice_number,
-          customerEmail,
-          success: true,
-        });
+        results.push({ invoiceId: invoice.id, invoiceNumber: invoice.invoice_number, customerEmail, success: true });
       } catch (emailError: any) {
         console.error("Error sending email:", emailError);
-        results.push({
-          invoiceId: invoice.id,
-          invoiceNumber: invoice.invoice_number,
-          success: false,
-          error: emailError.message,
-        });
+        emailStatus = 'failed';
+        errorMessage = emailError.message;
+        results.push({ invoiceId: invoice.id, invoiceNumber: invoice.invoice_number, success: false, error: emailError.message });
       }
+
+      // Log the notification
+      await supabase.from("notification_logs").insert({
+        company_id: targetCompanyId,
+        notification_type: 'invoice_reminder',
+        recipient_email: customerEmail,
+        subject: finalSubject,
+        status: emailStatus,
+        error_message: errorMessage,
+        metadata: {
+          invoice_id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          customer_name: customerName,
+          total: invoice.total,
+          remaining: remaining,
+        }
+      });
     }
 
     return new Response(
@@ -207,19 +193,13 @@ const handler = async (req: Request): Promise<Response> => {
         failed: results.filter((r) => !r.success).length,
         results,
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("Error in send-invoice-reminder function:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };

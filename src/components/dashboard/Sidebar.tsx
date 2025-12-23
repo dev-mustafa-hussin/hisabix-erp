@@ -19,6 +19,7 @@ import {
   Calculator,
   Megaphone,
   Bell,
+  History,
 } from "lucide-react";
 import Logo from "../Logo";
 
@@ -40,6 +41,7 @@ const menuItems = [
   { icon: BarChart3, label: "المتجر الإلكتروني", href: "#", hasSubmenu: true },
   { icon: Settings, label: "إعدادات الشركة", href: "/company-settings" },
   { icon: Bell, label: "إعدادات الإشعارات", href: "/notification-settings" },
+  { icon: History, label: "سجل الإشعارات", href: "/notification-logs" },
 ];
 
 const Sidebar = () => {

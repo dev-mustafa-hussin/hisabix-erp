@@ -17,6 +17,7 @@ import Reports from "./pages/Reports";
 import Receivables from "./pages/Receivables";
 import CompanySettings from "./pages/CompanySettings";
 import NotificationSettings from "./pages/NotificationSettings";
+import NotificationLogs from "./pages/NotificationLogs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,11 @@ const App = () => (
             <Route path="/notification-settings" element={
               <ProtectedRoute>
                 <NotificationSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/notification-logs" element={
+              <ProtectedRoute>
+                <NotificationLogs />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
