@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action_type: string
+          company_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_value: Json | null
+          old_value: Json | null
+          target_id: string | null
+          target_type: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          company_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          target_id?: string | null
+          target_type: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          target_id?: string | null
+          target_type?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           company_id: string
@@ -851,6 +901,53 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_invitations: {
+        Row: {
+          accepted_at: string | null
+          company_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          company_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role?: string
+          status?: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          company_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
