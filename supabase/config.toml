@@ -2,3 +2,6 @@ project_id = "vbzqgfftiedaigbknoxw"
 
 [functions.send-invoice-reminder]
 verify_jwt = false
+
+[functions.send-stock-alert]
+verify_jwt = false

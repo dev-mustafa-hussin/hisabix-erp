@@ -48,7 +48,10 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   History,
-  User,
+  Mail,
+  Edit,
+  Save,
+  X,
 } from "lucide-react";
 
 interface Product {
@@ -107,6 +110,10 @@ const Inventory = () => {
   });
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("inventory");
+  const [sendingAlert, setSendingAlert] = useState(false);
+  const [editingMinQuantity, setEditingMinQuantity] = useState<string | null>(null);
+  const [newMinQuantity, setNewMinQuantity] = useState<number>(0);
+  const [companyData, setCompanyData] = useState<{ name: string; email: string | null } | null>(null);
 
   useEffect(() => {
     const fetchCompanyId = async () => {
@@ -121,6 +128,17 @@ const Inventory = () => {
 
       if (data) {
         setCompanyId(data.company_id);
+        
+        // Fetch company details
+        const { data: company } = await supabase
+          .from("companies")
+          .select("name, email")
+          .eq("id", data.company_id)
+          .maybeSingle();
+        
+        if (company) {
+          setCompanyData(company);
+        }
       }
     };
 
@@ -245,6 +263,64 @@ const Inventory = () => {
       notes: "",
     });
     setIsStockDialogOpen(true);
+  };
+
+  const handleSendStockAlert = async () => {
+    if (!companyId || !companyData?.email) {
+      toast.error("يرجى إضافة بريد إلكتروني للشركة في الإعدادات");
+      return;
+    }
+
+    if (lowStockProducts.length === 0 && outOfStockProducts.length === 0) {
+      toast.info("لا توجد منتجات تحتاج تنبيه");
+      return;
+    }
+
+    setSendingAlert(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-stock-alert", {
+        body: {
+          company_id: companyId,
+          recipient_email: companyData.email,
+          company_name: companyData.name,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(`تم إرسال تنبيه المخزون إلى ${companyData.email}`);
+    } catch (error: any) {
+      console.error("Error sending stock alert:", error);
+      toast.error("فشل في إرسال تنبيه المخزون");
+    } finally {
+      setSendingAlert(false);
+    }
+  };
+
+  const handleUpdateMinQuantity = async (productId: string) => {
+    if (newMinQuantity < 0) {
+      toast.error("الحد الأدنى يجب أن يكون 0 أو أكثر");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("products")
+      .update({ min_quantity: newMinQuantity })
+      .eq("id", productId);
+
+    if (error) {
+      toast.error("فشل في تحديث الحد الأدنى");
+    } else {
+      toast.success("تم تحديث الحد الأدنى");
+      setEditingMinQuantity(null);
+      fetchProducts();
+    }
+  };
+
+  const startEditingMinQuantity = (product: Product) => {
+    setEditingMinQuantity(product.id);
+    setNewMinQuantity(product.min_quantity);
   };
 
   // Statistics
@@ -375,10 +451,26 @@ const Inventory = () => {
         {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && (
           <Card className="border-amber-500/50 bg-amber-500/5">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-amber-600 text-right">
-                <AlertTriangle className="w-5 h-5" />
-                تنبيهات المخزون
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendStockAlert}
+                  disabled={sendingAlert}
+                  className="gap-2"
+                >
+                  {sendingAlert ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4" />
+                  )}
+                  إرسال تنبيه بالبريد
+                </Button>
+                <CardTitle className="flex items-center gap-2 text-amber-600 text-right">
+                  <AlertTriangle className="w-5 h-5" />
+                  تنبيهات المخزون
+                </CardTitle>
+              </div>
               <CardDescription className="text-right">
                 المنتجات التي تحتاج إلى إعادة تعبئة
               </CardDescription>
@@ -479,8 +571,43 @@ const Inventory = () => {
                           <TableCell className="text-center font-bold">
                             {product.quantity}
                           </TableCell>
-                          <TableCell className="text-center text-muted-foreground">
-                            {product.min_quantity}
+                          <TableCell className="text-center">
+                            {editingMinQuantity === product.id ? (
+                              <div className="flex items-center gap-1 justify-center">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={newMinQuantity}
+                                  onChange={(e) => setNewMinQuantity(parseInt(e.target.value) || 0)}
+                                  className="w-16 h-7 text-center text-sm"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-emerald-600"
+                                  onClick={() => handleUpdateMinQuantity(product.id)}
+                                >
+                                  <Save className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground"
+                                  onClick={() => setEditingMinQuantity(null)}
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => startEditingMinQuantity(product)}
+                                className="text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1 justify-center w-full"
+                                title="انقر للتعديل"
+                              >
+                                {product.min_quantity}
+                                <Edit className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                              </button>
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             {getStockStatus(product)}
