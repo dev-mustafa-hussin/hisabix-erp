@@ -35,9 +35,13 @@ import {
   Users,
   Package,
   BarChart3,
+  Download,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ar } from "date-fns/locale";
+import { exportReportToPDF } from "@/utils/pdfExport";
+import { toast } from "sonner";
 
 interface SalesData {
   date: string;
@@ -379,6 +383,45 @@ const Reports = () => {
     setMonthlySalesData(months);
   };
 
+  const handleExportPDF = async () => {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", companyId)
+      .maybeSingle();
+
+    const periodLabels: { [key: string]: string } = {
+      "7": "Last 7 days",
+      "30": "Last 30 days",
+      "90": "Last 3 months",
+      "365": "Last year",
+    };
+
+    exportReportToPDF({
+      title: "Sales & Invoices Report",
+      period: periodLabels[period] || period,
+      company_name: company?.name || "EDOXO",
+      stats: [
+        { label: "Total Sales", value: `${totalSales.toLocaleString()} EGP` },
+        { label: "Total Invoices", value: totalInvoices.toString() },
+        { label: "Total Customers", value: totalCustomers.toString() },
+        { label: "Total Products", value: totalProducts.toString() },
+        { label: "Sales Growth", value: `${salesGrowth}%` },
+        { label: "Invoices Growth", value: `${invoicesGrowth}%` },
+      ],
+      tableData: {
+        headers: ["Product", "Quantity", "Revenue"],
+        rows: topProducts.map((p) => [
+          p.name,
+          p.quantity.toString(),
+          `${p.revenue.toLocaleString()} EGP`,
+        ]),
+      },
+    });
+
+    toast.success("تم تصدير التقرير إلى PDF");
+  };
+
   const StatCard = ({
     title,
     value,
@@ -431,17 +474,23 @@ const Reports = () => {
               <BarChart3 className="w-8 h-8 text-primary" />
               <h1 className="text-2xl font-bold text-foreground">التقارير</h1>
             </div>
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">آخر 7 أيام</SelectItem>
-                <SelectItem value="30">آخر 30 يوم</SelectItem>
-                <SelectItem value="90">آخر 3 أشهر</SelectItem>
-                <SelectItem value="365">آخر سنة</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleExportPDF}>
+                <Download className="w-4 h-4 ml-2" />
+                تصدير PDF
+              </Button>
+              <Select value={period} onValueChange={setPeriod}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">آخر 7 أيام</SelectItem>
+                  <SelectItem value="30">آخر 30 يوم</SelectItem>
+                  <SelectItem value="90">آخر 3 أشهر</SelectItem>
+                  <SelectItem value="365">آخر سنة</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {loading ? (

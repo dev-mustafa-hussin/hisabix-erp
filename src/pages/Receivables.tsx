@@ -25,9 +25,13 @@ import {
   FileText,
   ArrowLeft,
   CreditCard,
+  Download,
+  Mail,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ar } from "date-fns/locale";
+import { exportReceivablesReport } from "@/utils/pdfExport";
+import { toast } from "sonner";
 
 interface CustomerDebt {
   customerId: string;
@@ -230,6 +234,59 @@ const Receivables = () => {
     setLoading(false);
   };
 
+  const handleExportPDF = async () => {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", companyId)
+      .maybeSingle();
+
+    exportReceivablesReport({
+      company_name: company?.name || "EDOXO",
+      total_receivables: totalReceivables,
+      total_overdue: totalOverdue,
+      customers: customerDebts.map((c) => ({
+        name: c.customerName,
+        debt: c.totalDebt,
+        overdue: c.overdueAmount,
+      })),
+    });
+
+    toast.success("تم تصدير التقرير إلى PDF");
+  };
+
+  const handleSendAllReminders = async () => {
+    if (!companyId) return;
+
+    const overdueCount = unpaidInvoices.filter((i) => i.days_overdue > 0).length;
+    if (overdueCount === 0) {
+      toast.error("لا توجد فواتير متأخرة");
+      return;
+    }
+
+    toast.loading("جاري إرسال التذكيرات...");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-invoice-reminder", {
+        body: { companyId, sendAll: true },
+      });
+
+      if (error) throw error;
+
+      toast.dismiss();
+      if (data.sent > 0) {
+        toast.success(`تم إرسال ${data.sent} تذكير بنجاح`);
+      }
+      if (data.failed > 0) {
+        toast.warning(`فشل إرسال ${data.failed} تذكير`);
+      }
+    } catch (error: any) {
+      toast.dismiss();
+      toast.error("حدث خطأ في إرسال التذكيرات");
+      console.error(error);
+    }
+  };
+
   const StatCard = ({
     title,
     value,
@@ -299,10 +356,24 @@ const Receivables = () => {
               <DollarSign className="w-8 h-8 text-primary" />
               <h1 className="text-2xl font-bold text-foreground">المستحقات والديون</h1>
             </div>
-            <Button variant="outline" onClick={() => navigate("/invoices")}>
-              <ArrowLeft className="w-4 h-4 ml-2" />
-              الفواتير
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleExportPDF}>
+                <Download className="w-4 h-4 ml-2" />
+                تصدير PDF
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleSendAllReminders}
+                disabled={unpaidInvoices.filter(i => i.days_overdue > 0).length === 0}
+              >
+                <Mail className="w-4 h-4 ml-2" />
+                إرسال تذكيرات للمتأخرين
+              </Button>
+              <Button variant="outline" onClick={() => navigate("/invoices")}>
+                <ArrowLeft className="w-4 h-4 ml-2" />
+                الفواتير
+              </Button>
+            </div>
           </div>
 
           {loading ? (
