@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import Products from "./pages/Products";
+import Sales from "./pages/Sales";
 import CompanySettings from "./pages/CompanySettings";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,11 @@ const App = () => (
             <Route path="/products" element={
               <ProtectedRoute>
                 <Products />
+              </ProtectedRoute>
+            } />
+            <Route path="/sales" element={
+              <ProtectedRoute>
+                <Sales />
               </ProtectedRoute>
             } />
             <Route path="/company-settings" element={
