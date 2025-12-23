@@ -5,6 +5,7 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/dashboard/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -19,6 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +50,9 @@ import {
   Save,
   AlertTriangle,
   CheckCircle,
+  Palette,
+  Eye,
+  RotateCcw,
 } from "lucide-react";
 
 interface AlertSchedule {
@@ -52,6 +70,70 @@ interface Company {
   name: string;
   email: string | null;
 }
+
+interface EmailTemplate {
+  id: string;
+  company_id: string;
+  template_type: string;
+  subject: string;
+  body_html: string;
+  is_active: boolean;
+}
+
+const defaultTemplates: Record<string, { subject: string; body_html: string }> = {
+  stock_alert: {
+    subject: "⚠️ تنبيه المخزون - {{company_name}} ({{total_products}} منتج)",
+    body_html: `<h1 style="color: #1f2937; text-align: center;">🏪 {{company_name}}</h1>
+<h2 style="color: #374151; text-align: center;">تنبيه المخزون</h2>
+<p style="color: #6b7280; text-align: center;">هناك {{total_products}} منتج يحتاج إلى اهتمامك</p>
+{{out_of_stock_table}}
+{{low_stock_table}}
+<div style="margin-top: 30px; padding: 15px; background-color: #f0f9ff; border-radius: 8px; text-align: center;">
+  <p style="margin: 0; color: #0369a1;">يرجى مراجعة المخزون وإعادة تعبئة المنتجات المنخفضة</p>
+</div>`,
+  },
+  invoice_reminder: {
+    subject: "تذكير: فاتورة متأخرة رقم {{invoice_number}}",
+    body_html: `<h1 style="color: #dc2626; text-align: center;">⚠️ تذكير بفاتورة متأخرة</h1>
+<p>عزيزي {{customer_name}}،</p>
+<p>نود تذكيرك بأن لديك فاتورة متأخرة عن موعد السداد. نرجو منك سداد المبلغ المستحق في أقرب وقت ممكن.</p>
+<div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb;">
+  <p><strong>رقم الفاتورة:</strong> {{invoice_number}}</p>
+  <p><strong>تاريخ الاستحقاق:</strong> {{due_date}}</p>
+  <p><strong>المبلغ الإجمالي:</strong> {{total}} جنيه</p>
+  <p><strong>المبلغ المدفوع:</strong> {{paid_amount}} جنيه</p>
+  <p><strong>المبلغ المتبقي:</strong> <span style="font-size: 24px; color: #dc2626; font-weight: bold;">{{remaining}} جنيه</span></p>
+</div>
+<p>إذا كنت قد قمت بالسداد بالفعل، يرجى تجاهل هذه الرسالة أو التواصل معنا لتحديث السجلات.</p>
+<p>شكراً لتعاونكم.</p>
+<p>مع أطيب التحيات،<br><strong>{{company_name}}</strong></p>`,
+  },
+};
+
+const templateTypes = [
+  { value: "stock_alert", label: "تنبيه المخزون", icon: Package },
+  { value: "invoice_reminder", label: "تذكير الفاتورة", icon: FileText },
+];
+
+const templateVariables: Record<string, { name: string; description: string }[]> = {
+  stock_alert: [
+    { name: "{{company_name}}", description: "اسم الشركة" },
+    { name: "{{total_products}}", description: "عدد المنتجات الإجمالي" },
+    { name: "{{out_of_stock_count}}", description: "عدد المنتجات النافذة" },
+    { name: "{{low_stock_count}}", description: "عدد المنتجات المنخفضة" },
+    { name: "{{out_of_stock_table}}", description: "جدول المنتجات النافذة" },
+    { name: "{{low_stock_table}}", description: "جدول المنتجات المنخفضة" },
+  ],
+  invoice_reminder: [
+    { name: "{{customer_name}}", description: "اسم العميل" },
+    { name: "{{company_name}}", description: "اسم الشركة" },
+    { name: "{{invoice_number}}", description: "رقم الفاتورة" },
+    { name: "{{due_date}}", description: "تاريخ الاستحقاق" },
+    { name: "{{total}}", description: "المبلغ الإجمالي" },
+    { name: "{{paid_amount}}", description: "المبلغ المدفوع" },
+    { name: "{{remaining}}", description: "المبلغ المتبقي" },
+  ],
+};
 
 const NotificationSettings = () => {
   const { user } = useAuth();
@@ -75,6 +157,16 @@ const NotificationSettings = () => {
     email_low_stock_warning: true,
     email_out_of_stock_alert: true,
   });
+
+  // Email templates
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [selectedTemplateType, setSelectedTemplateType] = useState("stock_alert");
+  const [templateForm, setTemplateForm] = useState({
+    subject: "",
+    body_html: "",
+  });
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,6 +211,16 @@ const NotificationSettings = () => {
             daily_hour: schedule.daily_hour,
           });
         }
+
+        // Fetch email templates
+        const { data: templatesData } = await supabase
+          .from("email_templates")
+          .select("*")
+          .eq("company_id", companyUser.company_id);
+
+        if (templatesData) {
+          setTemplates(templatesData as EmailTemplate[]);
+        }
       }
 
       setLoading(false);
@@ -126,6 +228,23 @@ const NotificationSettings = () => {
 
     fetchData();
   }, [user?.id]);
+
+  // Update template form when selected type changes
+  useEffect(() => {
+    const existingTemplate = templates.find(t => t.template_type === selectedTemplateType);
+    if (existingTemplate) {
+      setTemplateForm({
+        subject: existingTemplate.subject,
+        body_html: existingTemplate.body_html,
+      });
+    } else {
+      const defaultTemplate = defaultTemplates[selectedTemplateType];
+      setTemplateForm({
+        subject: defaultTemplate?.subject || "",
+        body_html: defaultTemplate?.body_html || "",
+      });
+    }
+  }, [selectedTemplateType, templates]);
 
   const handleSaveStockSchedule = async () => {
     if (!companyId) return;
@@ -177,6 +296,109 @@ const NotificationSettings = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!companyId) return;
+
+    setSavingTemplate(true);
+
+    try {
+      const existingTemplate = templates.find(t => t.template_type === selectedTemplateType);
+
+      if (existingTemplate) {
+        const { error } = await supabase
+          .from("email_templates")
+          .update({
+            subject: templateForm.subject,
+            body_html: templateForm.body_html,
+          })
+          .eq("id", existingTemplate.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("email_templates")
+          .insert({
+            company_id: companyId,
+            template_type: selectedTemplateType,
+            subject: templateForm.subject,
+            body_html: templateForm.body_html,
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("تم حفظ القالب بنجاح");
+
+      // Refresh templates
+      const { data: templatesData } = await supabase
+        .from("email_templates")
+        .select("*")
+        .eq("company_id", companyId);
+
+      if (templatesData) {
+        setTemplates(templatesData as EmailTemplate[]);
+      }
+    } catch (error: any) {
+      console.error("Error saving template:", error);
+      toast.error("فشل في حفظ القالب");
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  const handleResetTemplate = () => {
+    const defaultTemplate = defaultTemplates[selectedTemplateType];
+    setTemplateForm({
+      subject: defaultTemplate?.subject || "",
+      body_html: defaultTemplate?.body_html || "",
+    });
+    toast.info("تم إعادة تعيين القالب إلى الافتراضي");
+  };
+
+  const getPreviewHtml = () => {
+    let html = templateForm.body_html;
+    // Replace variables with sample data
+    html = html.replace(/\{\{company_name\}\}/g, company?.name || "اسم الشركة");
+    html = html.replace(/\{\{total_products\}\}/g, "5");
+    html = html.replace(/\{\{out_of_stock_count\}\}/g, "2");
+    html = html.replace(/\{\{low_stock_count\}\}/g, "3");
+    html = html.replace(/\{\{customer_name\}\}/g, "أحمد محمد");
+    html = html.replace(/\{\{invoice_number\}\}/g, "INV-001");
+    html = html.replace(/\{\{due_date\}\}/g, "15/01/2024");
+    html = html.replace(/\{\{total\}\}/g, "1500.00");
+    html = html.replace(/\{\{paid_amount\}\}/g, "500.00");
+    html = html.replace(/\{\{remaining\}\}/g, "1000.00");
+    html = html.replace(/\{\{out_of_stock_table\}\}/g, `
+      <h3 style="color: #dc2626; margin-top: 20px;">⚠️ منتجات نفذت من المخزون (2)</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <tr style="background-color: #fef2f2;">
+          <th style="padding: 10px; border: 1px solid #fecaca; text-align: right;">المنتج</th>
+          <th style="padding: 10px; border: 1px solid #fecaca; text-align: center;">الحد الأدنى</th>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border: 1px solid #fecaca; text-align: right;">منتج تجريبي 1</td>
+          <td style="padding: 10px; border: 1px solid #fecaca; text-align: center;">10</td>
+        </tr>
+      </table>
+    `);
+    html = html.replace(/\{\{low_stock_table\}\}/g, `
+      <h3 style="color: #d97706; margin-top: 20px;">⚡ منتجات بمخزون منخفض (3)</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <tr style="background-color: #fffbeb;">
+          <th style="padding: 10px; border: 1px solid #fde68a; text-align: right;">المنتج</th>
+          <th style="padding: 10px; border: 1px solid #fde68a; text-align: center;">الكمية الحالية</th>
+          <th style="padding: 10px; border: 1px solid #fde68a; text-align: center;">الحد الأدنى</th>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border: 1px solid #fde68a; text-align: right;">منتج تجريبي 2</td>
+          <td style="padding: 10px; border: 1px solid #fde68a; text-align: center; font-weight: bold; color: #d97706;">3</td>
+          <td style="padding: 10px; border: 1px solid #fde68a; text-align: center;">10</td>
+        </tr>
+      </table>
+    `);
+    return html;
   };
 
   const weekDays = [
@@ -467,6 +689,141 @@ const NotificationSettings = () => {
                 💡 يمكنك إرسال تذكيرات الفواتير يدوياً من صفحة الفواتير لكل فاتورة على حدة
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Email Templates */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-right flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" />
+              قوالب البريد الإلكتروني
+            </CardTitle>
+            <CardDescription className="text-right">
+              تخصيص محتوى رسائل البريد الإلكتروني للتنبيهات
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Template Type Tabs */}
+            <Tabs value={selectedTemplateType} onValueChange={setSelectedTemplateType}>
+              <TabsList className="grid w-full grid-cols-2">
+                {templateTypes.map((type) => (
+                  <TabsTrigger key={type.value} value={type.value} className="gap-2">
+                    <type.icon className="w-4 h-4" />
+                    {type.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {templateTypes.map((type) => (
+                <TabsContent key={type.value} value={type.value} className="space-y-4 mt-4">
+                  {/* Subject */}
+                  <div className="space-y-2">
+                    <Label className="text-right block">عنوان البريد</Label>
+                    <Input
+                      value={templateForm.subject}
+                      onChange={(e) => setTemplateForm({ ...templateForm, subject: e.target.value })}
+                      className="text-right"
+                      dir="rtl"
+                    />
+                  </div>
+
+                  {/* Body */}
+                  <div className="space-y-2">
+                    <Label className="text-right block">محتوى البريد (HTML)</Label>
+                    <Textarea
+                      value={templateForm.body_html}
+                      onChange={(e) => setTemplateForm({ ...templateForm, body_html: e.target.value })}
+                      className="min-h-[200px] font-mono text-sm"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  {/* Available Variables */}
+                  <div className="space-y-2">
+                    <Label className="text-right block text-sm text-muted-foreground">المتغيرات المتاحة:</Label>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {templateVariables[type.value]?.map((variable) => (
+                        <Badge
+                          key={variable.name}
+                          variant="outline"
+                          className="cursor-pointer hover:bg-primary/10 text-xs"
+                          onClick={() => {
+                            navigator.clipboard.writeText(variable.name);
+                            toast.info(`تم نسخ ${variable.name}`);
+                          }}
+                          title={variable.description}
+                        >
+                          {variable.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 justify-start pt-4">
+                    <Button onClick={handleSaveTemplate} disabled={savingTemplate} className="gap-2">
+                      {savingTemplate ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      حفظ القالب
+                    </Button>
+
+                    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="gap-2">
+                          <Eye className="w-4 h-4" />
+                          معاينة
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="text-right">معاينة البريد الإلكتروني</DialogTitle>
+                          <DialogDescription className="text-right">
+                            هذه معاينة تقريبية للبريد الإلكتروني
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="mt-4 space-y-4">
+                          <div className="p-3 bg-muted/50 rounded-lg">
+                            <p className="text-sm text-muted-foreground">العنوان:</p>
+                            <p className="font-medium">{templateForm.subject.replace(/\{\{[^}]+\}\}/g, (match) => {
+                              const map: Record<string, string> = {
+                                "{{company_name}}": company?.name || "اسم الشركة",
+                                "{{total_products}}": "5",
+                                "{{invoice_number}}": "INV-001",
+                              };
+                              return map[match] || match;
+                            })}</p>
+                          </div>
+                          <div 
+                            className="p-4 bg-white border rounded-lg"
+                            dir="rtl"
+                            dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Button variant="ghost" onClick={handleResetTemplate} className="gap-2">
+                      <RotateCcw className="w-4 h-4" />
+                      إعادة تعيين
+                    </Button>
+                  </div>
+
+                  {/* Template Status */}
+                  {templates.find(t => t.template_type === type.value) && (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="text-sm text-emerald-700">قالب مخصص محفوظ</span>
+                        <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
           </CardContent>
         </Card>
       </main>

@@ -15,6 +15,16 @@ interface StockAlertRequest {
   company_name: string;
 }
 
+const defaultSubject = "⚠️ تنبيه المخزون - {{company_name}} ({{total_products}} منتج)";
+const defaultBodyHtml = `<h1 style="color: #1f2937; text-align: center;">🏪 {{company_name}}</h1>
+<h2 style="color: #374151; text-align: center;">تنبيه المخزون</h2>
+<p style="color: #6b7280; text-align: center;">هناك {{total_products}} منتج يحتاج إلى اهتمامك</p>
+{{out_of_stock_table}}
+{{low_stock_table}}
+<div style="margin-top: 30px; padding: 15px; background-color: #f0f9ff; border-radius: 8px; text-align: center;">
+  <p style="margin: 0; color: #0369a1;">يرجى مراجعة المخزون وإعادة تعبئة المنتجات المنخفضة</p>
+</div>`;
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -29,6 +39,20 @@ const handler = async (req: Request): Promise<Response> => {
     const { company_id, recipient_email, company_name }: StockAlertRequest = await req.json();
 
     console.log(`Fetching low stock products for company: ${company_id}`);
+
+    // Get custom email template if exists
+    const { data: templateData } = await supabase
+      .from("email_templates")
+      .select("subject, body_html")
+      .eq("company_id", company_id)
+      .eq("template_type", "stock_alert")
+      .eq("is_active", true)
+      .maybeSingle();
+
+    const emailSubject = templateData?.subject || defaultSubject;
+    const emailBodyTemplate = templateData?.body_html || defaultBodyHtml;
+
+    console.log(`Using ${templateData ? 'custom' : 'default'} email template`);
 
     // Get products with low or zero stock
     const { data: products, error: productsError } = await supabase
@@ -59,8 +83,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Build email content
-    const outOfStockHtml = outOfStock.length > 0 
+    // Build tables HTML
+    const outOfStockTableHtml = outOfStock.length > 0 
       ? `
         <h3 style="color: #dc2626; margin-top: 20px;">⚠️ منتجات نفذت من المخزون (${outOfStock.length})</h3>
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -78,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
       ` 
       : "";
 
-    const lowStockHtml = lowStock.length > 0 
+    const lowStockTableHtml = lowStock.length > 0 
       ? `
         <h3 style="color: #d97706; margin-top: 20px;">⚡ منتجات بمخزون منخفض (${lowStock.length})</h3>
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -98,6 +122,23 @@ const handler = async (req: Request): Promise<Response> => {
       ` 
       : "";
 
+    const totalProducts = outOfStock.length + lowStock.length;
+
+    // Replace template variables
+    const finalSubject = emailSubject
+      .replace(/\{\{company_name\}\}/g, company_name)
+      .replace(/\{\{total_products\}\}/g, totalProducts.toString())
+      .replace(/\{\{out_of_stock_count\}\}/g, outOfStock.length.toString())
+      .replace(/\{\{low_stock_count\}\}/g, lowStock.length.toString());
+
+    const finalBody = emailBodyTemplate
+      .replace(/\{\{company_name\}\}/g, company_name)
+      .replace(/\{\{total_products\}\}/g, totalProducts.toString())
+      .replace(/\{\{out_of_stock_count\}\}/g, outOfStock.length.toString())
+      .replace(/\{\{low_stock_count\}\}/g, lowStock.length.toString())
+      .replace(/\{\{out_of_stock_table\}\}/g, outOfStockTableHtml)
+      .replace(/\{\{low_stock_table\}\}/g, lowStockTableHtml);
+
     const emailHtml = `
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
@@ -107,24 +148,8 @@ const handler = async (req: Request): Promise<Response> => {
       </head>
       <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; padding: 20px;">
         <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <h1 style="color: #1f2937; text-align: center; margin-bottom: 10px;">🏪 ${company_name}</h1>
-          <h2 style="color: #374151; text-align: center; margin-top: 0;">تنبيه المخزون</h2>
-          
-          <p style="color: #6b7280; text-align: center; margin-bottom: 30px;">
-            هناك ${outOfStock.length + lowStock.length} منتج يحتاج إلى اهتمامك
-          </p>
-
-          ${outOfStockHtml}
-          ${lowStockHtml}
-
-          <div style="margin-top: 30px; padding: 15px; background-color: #f0f9ff; border-radius: 8px; text-align: center;">
-            <p style="margin: 0; color: #0369a1;">
-              يرجى مراجعة المخزون وإعادة تعبئة المنتجات المنخفضة
-            </p>
-          </div>
-
+          ${finalBody}
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-          
           <p style="color: #9ca3af; font-size: 12px; text-align: center;">
             هذا البريد تم إرساله تلقائياً من نظام EDOXO
           </p>
@@ -144,7 +169,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "EDOXO <onboarding@resend.dev>",
         to: [recipient_email],
-        subject: `⚠️ تنبيه المخزون - ${company_name} (${outOfStock.length + lowStock.length} منتج)`,
+        subject: finalSubject,
         html: emailHtml,
       }),
     });

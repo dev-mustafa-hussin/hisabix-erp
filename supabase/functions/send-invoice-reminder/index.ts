@@ -16,6 +16,21 @@ interface ReminderRequest {
   sendAll?: boolean;
 }
 
+const defaultSubject = "تذكير: فاتورة متأخرة رقم {{invoice_number}}";
+const defaultBodyHtml = `<h1 style="color: #dc2626; text-align: center;">⚠️ تذكير بفاتورة متأخرة</h1>
+<p>عزيزي {{customer_name}}،</p>
+<p>نود تذكيرك بأن لديك فاتورة متأخرة عن موعد السداد. نرجو منك سداد المبلغ المستحق في أقرب وقت ممكن.</p>
+<div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb;">
+  <p><strong>رقم الفاتورة:</strong> {{invoice_number}}</p>
+  <p><strong>تاريخ الاستحقاق:</strong> {{due_date}}</p>
+  <p><strong>المبلغ الإجمالي:</strong> {{total}} جنيه</p>
+  <p><strong>المبلغ المدفوع:</strong> {{paid_amount}} جنيه</p>
+  <p><strong>المبلغ المتبقي:</strong> <span style="font-size: 24px; color: #dc2626; font-weight: bold;">{{remaining}} جنيه</span></p>
+</div>
+<p>إذا كنت قد قمت بالسداد بالفعل، يرجى تجاهل هذه الرسالة أو التواصل معنا لتحديث السجلات.</p>
+<p>شكراً لتعاونكم.</p>
+<p>مع أطيب التحيات،<br><strong>{{company_name}}</strong></p>`;
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-invoice-reminder function called");
 
@@ -33,6 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Request params:", { invoiceId, companyId, sendAll });
 
     let invoices = [];
+    let templateData = null;
 
     if (invoiceId) {
       // Send reminder for specific invoice
@@ -47,7 +63,18 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
 
       if (error) throw error;
-      if (data) invoices = [data];
+      if (data) {
+        invoices = [data];
+        // Get template for this company
+        const { data: template } = await supabase
+          .from("email_templates")
+          .select("subject, body_html")
+          .eq("company_id", data.company_id)
+          .eq("template_type", "invoice_reminder")
+          .eq("is_active", true)
+          .maybeSingle();
+        templateData = template;
+      }
     } else if (companyId && sendAll) {
       // Send reminders for all overdue invoices
       const { data, error } = await supabase
@@ -63,9 +90,23 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (error) throw error;
       invoices = data || [];
+
+      // Get template for this company
+      const { data: template } = await supabase
+        .from("email_templates")
+        .select("subject, body_html")
+        .eq("company_id", companyId)
+        .eq("template_type", "invoice_reminder")
+        .eq("is_active", true)
+        .maybeSingle();
+      templateData = template;
     }
 
+    const emailSubject = templateData?.subject || defaultSubject;
+    const emailBodyTemplate = templateData?.body_html || defaultBodyHtml;
+
     console.log(`Found ${invoices.length} invoices to send reminders for`);
+    console.log(`Using ${templateData ? 'custom' : 'default'} email template`);
 
     const results = [];
 
@@ -89,6 +130,25 @@ const handler = async (req: Request): Promise<Response> => {
         ? new Date(invoice.due_date).toLocaleDateString("ar-EG")
         : "غير محدد";
 
+      // Replace template variables
+      const finalSubject = emailSubject
+        .replace(/\{\{customer_name\}\}/g, customerName)
+        .replace(/\{\{company_name\}\}/g, companyName)
+        .replace(/\{\{invoice_number\}\}/g, invoice.invoice_number)
+        .replace(/\{\{due_date\}\}/g, dueDate)
+        .replace(/\{\{total\}\}/g, invoice.total.toFixed(2))
+        .replace(/\{\{paid_amount\}\}/g, invoice.paid_amount.toFixed(2))
+        .replace(/\{\{remaining\}\}/g, remaining.toFixed(2));
+
+      const finalBody = emailBodyTemplate
+        .replace(/\{\{customer_name\}\}/g, customerName)
+        .replace(/\{\{company_name\}\}/g, companyName)
+        .replace(/\{\{invoice_number\}\}/g, invoice.invoice_number)
+        .replace(/\{\{due_date\}\}/g, dueDate)
+        .replace(/\{\{total\}\}/g, invoice.total.toFixed(2))
+        .replace(/\{\{paid_amount\}\}/g, invoice.paid_amount.toFixed(2))
+        .replace(/\{\{remaining\}\}/g, remaining.toFixed(2));
+
       const emailHtml = `
         <!DOCTYPE html>
         <html dir="rtl" lang="ar">
@@ -97,35 +157,14 @@ const handler = async (req: Request): Promise<Response> => {
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.8; color: #333; direction: rtl; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; }
-            .invoice-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb; }
-            .amount { font-size: 24px; color: #dc2626; font-weight: bold; }
+            .content { background: #f9fafb; padding: 30px; border: 1px solid #e5e7eb; border-radius: 8px; }
             .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
-            .btn { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="header">
-              <h1>⚠️ تذكير بفاتورة متأخرة</h1>
-            </div>
             <div class="content">
-              <p>عزيزي ${customerName}،</p>
-              <p>نود تذكيرك بأن لديك فاتورة متأخرة عن موعد السداد. نرجو منك سداد المبلغ المستحق في أقرب وقت ممكن.</p>
-              
-              <div class="invoice-details">
-                <p><strong>رقم الفاتورة:</strong> ${invoice.invoice_number}</p>
-                <p><strong>تاريخ الاستحقاق:</strong> ${dueDate}</p>
-                <p><strong>المبلغ الإجمالي:</strong> ${invoice.total.toFixed(2)} جنيه</p>
-                <p><strong>المبلغ المدفوع:</strong> ${invoice.paid_amount.toFixed(2)} جنيه</p>
-                <p><strong>المبلغ المتبقي:</strong> <span class="amount">${remaining.toFixed(2)} جنيه</span></p>
-              </div>
-              
-              <p>إذا كنت قد قمت بالسداد بالفعل، يرجى تجاهل هذه الرسالة أو التواصل معنا لتحديث السجلات.</p>
-              
-              <p>شكراً لتعاونكم.</p>
-              <p>مع أطيب التحيات،<br><strong>${companyName}</strong></p>
+              ${finalBody}
             </div>
             <div class="footer">
               <p>هذه رسالة تذكير آلية. للاستفسار يرجى التواصل مع قسم المحاسبة.</p>
@@ -139,7 +178,7 @@ const handler = async (req: Request): Promise<Response> => {
         const emailResponse = await resend.emails.send({
           from: `${companyName} <onboarding@resend.dev>`,
           to: [customerEmail],
-          subject: `تذكير: فاتورة متأخرة رقم ${invoice.invoice_number}`,
+          subject: finalSubject,
           html: emailHtml,
         });
 
