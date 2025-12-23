@@ -21,6 +21,7 @@ import {
   Bell,
   History,
   PieChart,
+  BarChart2,
 } from "lucide-react";
 import Logo from "../Logo";
 
@@ -43,6 +44,7 @@ const menuItems = [
   { icon: BarChart3, label: "المتجر الإلكتروني", href: "#", hasSubmenu: true },
   { icon: Settings, label: "إعدادات الشركة", href: "/company-settings" },
   { icon: Bell, label: "إعدادات الإشعارات", href: "/notification-settings" },
+  { icon: BarChart2, label: "لوحة تحكم الإشعارات", href: "/notifications-dashboard" },
   { icon: History, label: "سجل الإشعارات", href: "/notification-logs" },
 ];
 
