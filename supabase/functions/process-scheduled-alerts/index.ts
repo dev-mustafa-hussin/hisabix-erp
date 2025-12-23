@@ -427,6 +427,204 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // =============== USER EXPIRATION ALERTS ===============
+    console.log("Processing user expiration alerts...");
+
+    // Get users expiring in the next 3 days
+    const threeDaysFromNow = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+    const oneDayFromNow = new Date(now.getTime() + (1 * 24 * 60 * 60 * 1000));
+
+    const { data: expiringUsers, error: expiringUsersError } = await supabase
+      .from("company_users")
+      .select(`
+        id,
+        user_id,
+        company_id,
+        role,
+        expires_at,
+        company:companies(id, name, name_ar, email),
+        profile:profiles!company_users_user_id_fkey(full_name)
+      `)
+      .not("expires_at", "is", null)
+      .gte("expires_at", now.toISOString())
+      .lte("expires_at", threeDaysFromNow.toISOString());
+
+    if (expiringUsersError) {
+      console.error("Error fetching expiring users:", expiringUsersError);
+    } else {
+      console.log(`Found ${expiringUsers?.length || 0} users with expiring access`);
+
+      // Group by company
+      const companiesWithExpiringUsers: { [companyId: string]: any[] } = {};
+      
+      for (const user of expiringUsers || []) {
+        const companyId = user.company_id;
+        if (!companiesWithExpiringUsers[companyId]) {
+          companiesWithExpiringUsers[companyId] = [];
+        }
+        
+        const expiresAt = new Date(user.expires_at);
+        const daysUntilExpiry = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        companiesWithExpiringUsers[companyId].push({
+          ...user,
+          daysUntilExpiry,
+          isUrgent: expiresAt <= oneDayFromNow,
+        });
+      }
+
+      // Send alerts for each company
+      for (const [companyId, users] of Object.entries(companiesWithExpiringUsers)) {
+        const company = users[0]?.company;
+        if (!company?.email) {
+          console.log(`Skipping expiration alert for company ${companyId} - no email configured`);
+          continue;
+        }
+
+        // Check if we already sent an alert today for this company
+        const todayStart = new Date(now);
+        todayStart.setUTCHours(0, 0, 0, 0);
+        
+        const { data: recentLogs } = await supabase
+          .from("notification_logs")
+          .select("id")
+          .eq("company_id", companyId)
+          .eq("notification_type", "user_expiration_alert")
+          .gte("created_at", todayStart.toISOString())
+          .limit(1);
+
+        if (recentLogs && recentLogs.length > 0) {
+          console.log(`Skipping expiration alert for ${company.name} - already sent today`);
+          continue;
+        }
+
+        console.log(`Sending expiration alert for company: ${company.name} with ${users.length} expiring users`);
+
+        const urgentUsers = users.filter((u: any) => u.isUrgent);
+        const warningUsers = users.filter((u: any) => !u.isUrgent);
+
+        const getRoleText = (role: string) => {
+          switch (role) {
+            case "admin": return "مدير";
+            case "moderator": return "مشرف";
+            default: return "مستخدم";
+          }
+        };
+
+        const urgentTableHtml = urgentUsers.length > 0
+          ? `
+            <h3 style="color: #dc2626; margin-top: 20px;">⚠️ ينتهي خلال 24 ساعة (${urgentUsers.length})</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+              <tr style="background-color: #fef2f2;">
+                <th style="padding: 10px; border: 1px solid #fecaca; text-align: right;">المستخدم</th>
+                <th style="padding: 10px; border: 1px solid #fecaca; text-align: center;">الصلاحية</th>
+                <th style="padding: 10px; border: 1px solid #fecaca; text-align: center;">تاريخ الانتهاء</th>
+              </tr>
+              ${urgentUsers.map((u: any) => `
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #fecaca; text-align: right;">${u.profile?.full_name || "مستخدم"}</td>
+                  <td style="padding: 10px; border: 1px solid #fecaca; text-align: center;">${getRoleText(u.role)}</td>
+                  <td style="padding: 10px; border: 1px solid #fecaca; text-align: center; font-weight: bold; color: #dc2626;">
+                    ${new Date(u.expires_at).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })}
+                  </td>
+                </tr>
+              `).join("")}
+            </table>
+          `
+          : "";
+
+        const warningTableHtml = warningUsers.length > 0
+          ? `
+            <h3 style="color: #d97706; margin-top: 20px;">⏰ ينتهي خلال 3 أيام (${warningUsers.length})</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+              <tr style="background-color: #fffbeb;">
+                <th style="padding: 10px; border: 1px solid #fde68a; text-align: right;">المستخدم</th>
+                <th style="padding: 10px; border: 1px solid #fde68a; text-align: center;">الصلاحية</th>
+                <th style="padding: 10px; border: 1px solid #fde68a; text-align: center;">تاريخ الانتهاء</th>
+                <th style="padding: 10px; border: 1px solid #fde68a; text-align: center;">المتبقي</th>
+              </tr>
+              ${warningUsers.map((u: any) => `
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #fde68a; text-align: right;">${u.profile?.full_name || "مستخدم"}</td>
+                  <td style="padding: 10px; border: 1px solid #fde68a; text-align: center;">${getRoleText(u.role)}</td>
+                  <td style="padding: 10px; border: 1px solid #fde68a; text-align: center;">
+                    ${new Date(u.expires_at).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" })}
+                  </td>
+                  <td style="padding: 10px; border: 1px solid #fde68a; text-align: center; font-weight: bold; color: #d97706;">
+                    ${u.daysUntilExpiry} ${u.daysUntilExpiry === 1 ? "يوم" : "أيام"}
+                  </td>
+                </tr>
+              `).join("")}
+            </table>
+          `
+          : "";
+
+        const expirationEmailHtml = `
+          <!DOCTYPE html>
+          <html dir="rtl" lang="ar">
+          <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+          <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+              <h1 style="color: #1f2937; text-align: center; margin-bottom: 10px;">🏪 ${company.name_ar || company.name}</h1>
+              <h2 style="color: #374151; text-align: center; margin-top: 0;">تنبيه انتهاء صلاحية المستخدمين</h2>
+              <p style="color: #6b7280; text-align: center; margin-bottom: 30px;">يوجد ${users.length} مستخدم ستنتهي صلاحيتهم قريباً</p>
+              ${urgentTableHtml}
+              ${warningTableHtml}
+              <div style="margin-top: 30px; padding: 15px; background-color: #f0f9ff; border-radius: 8px; text-align: center;">
+                <p style="margin: 0; color: #0369a1;">يرجى مراجعة صلاحيات المستخدمين وتجديدها إذا لزم الأمر</p>
+              </div>
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+              <p style="color: #9ca3af; font-size: 12px; text-align: center;">هذا البريد تم إرساله تلقائياً من نظام EDOXO</p>
+            </div>
+          </body>
+          </html>
+        `;
+
+        const emailSubject = `⏰ تنبيه انتهاء صلاحية المستخدمين - ${company.name_ar || company.name} (${users.length} مستخدم)`;
+
+        const emailResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "EDOXO <onboarding@resend.dev>",
+            to: [company.email],
+            subject: emailSubject,
+            html: expirationEmailHtml,
+          }),
+        });
+
+        const emailData = await emailResponse.json();
+        console.log(`Expiration alert email sent to ${company.email}:`, emailData);
+
+        // Log notification
+        await supabase.from("notification_logs").insert({
+          company_id: companyId,
+          notification_type: "user_expiration_alert",
+          recipient_email: company.email,
+          subject: emailSubject,
+          status: emailResponse.ok ? "sent" : "failed",
+          error_message: emailResponse.ok ? null : emailData.message,
+          metadata: {
+            total_expiring: users.length,
+            urgent_count: urgentUsers.length,
+            warning_count: warningUsers.length,
+            user_ids: users.map((u: any) => u.user_id),
+          },
+        });
+
+        results.push({
+          type: "user_expiration_alert",
+          company: company.name,
+          email: company.email,
+          expiring_users: users.length,
+          urgent: urgentUsers.length,
+        });
+      }
+    }
+
     console.log(`Processed ${results.length} alerts successfully`);
 
     return new Response(
