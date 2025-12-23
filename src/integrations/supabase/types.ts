@@ -380,6 +380,50 @@ export type Database = {
           },
         ]
       }
+      movement_change_alerts: {
+        Row: {
+          company_id: string
+          comparison_days: number
+          created_at: string
+          id: string
+          is_active: boolean
+          last_checked_at: string | null
+          recipient_email: string | null
+          threshold_percent: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          comparison_days?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_checked_at?: string | null
+          recipient_email?: string | null
+          threshold_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          comparison_days?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_checked_at?: string | null
+          recipient_email?: string | null
+          threshold_percent?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movement_change_alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_logs: {
         Row: {
           company_id: string

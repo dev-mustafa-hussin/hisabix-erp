@@ -53,6 +53,8 @@ import {
   Palette,
   Eye,
   RotateCcw,
+  TrendingUp,
+  Send,
 } from "lucide-react";
 
 interface AlertSchedule {
@@ -78,6 +80,16 @@ interface EmailTemplate {
   subject: string;
   body_html: string;
   is_active: boolean;
+}
+
+interface MovementChangeAlert {
+  id: string;
+  company_id: string;
+  is_active: boolean;
+  threshold_percent: number;
+  comparison_days: number;
+  recipient_email: string | null;
+  last_checked_at: string | null;
 }
 
 const defaultTemplates: Record<string, { subject: string; body_html: string }> = {
@@ -168,6 +180,16 @@ const NotificationSettings = () => {
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  // Movement change alerts
+  const [movementChangeAlert, setMovementChangeAlert] = useState<MovementChangeAlert | null>(null);
+  const [movementAlertForm, setMovementAlertForm] = useState({
+    is_active: false,
+    threshold_percent: 50,
+    comparison_days: 7,
+  });
+  const [savingMovementAlert, setSavingMovementAlert] = useState(false);
+  const [sendingMovementAlert, setSendingMovementAlert] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user?.id) return;
@@ -220,6 +242,22 @@ const NotificationSettings = () => {
 
         if (templatesData) {
           setTemplates(templatesData as EmailTemplate[]);
+        }
+
+        // Fetch movement change alert settings
+        const { data: movementAlertData } = await supabase
+          .from("movement_change_alerts")
+          .select("*")
+          .eq("company_id", companyUser.company_id)
+          .maybeSingle();
+
+        if (movementAlertData) {
+          setMovementChangeAlert(movementAlertData as MovementChangeAlert);
+          setMovementAlertForm({
+            is_active: movementAlertData.is_active,
+            threshold_percent: movementAlertData.threshold_percent,
+            comparison_days: movementAlertData.comparison_days,
+          });
         }
       }
 
@@ -355,6 +393,95 @@ const NotificationSettings = () => {
       body_html: defaultTemplate?.body_html || "",
     });
     toast.info("تم إعادة تعيين القالب إلى الافتراضي");
+  };
+
+  const handleSaveMovementAlert = async () => {
+    if (!companyId || !company?.email) {
+      toast.error("يجب إضافة البريد الإلكتروني للشركة أولاً");
+      return;
+    }
+
+    setSavingMovementAlert(true);
+
+    try {
+      if (movementChangeAlert) {
+        const { error } = await supabase
+          .from("movement_change_alerts")
+          .update({
+            is_active: movementAlertForm.is_active,
+            threshold_percent: movementAlertForm.threshold_percent,
+            comparison_days: movementAlertForm.comparison_days,
+            recipient_email: company.email,
+          })
+          .eq("id", movementChangeAlert.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("movement_change_alerts")
+          .insert({
+            company_id: companyId,
+            is_active: movementAlertForm.is_active,
+            threshold_percent: movementAlertForm.threshold_percent,
+            comparison_days: movementAlertForm.comparison_days,
+            recipient_email: company.email,
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("تم حفظ إعدادات تنبيهات التغييرات بنجاح");
+
+      // Refresh settings
+      const { data } = await supabase
+        .from("movement_change_alerts")
+        .select("*")
+        .eq("company_id", companyId)
+        .maybeSingle();
+
+      if (data) {
+        setMovementChangeAlert(data as MovementChangeAlert);
+      }
+    } catch (error: any) {
+      console.error("Error saving movement alert:", error);
+      toast.error("فشل في حفظ الإعدادات");
+    } finally {
+      setSavingMovementAlert(false);
+    }
+  };
+
+  const handleSendMovementAlertNow = async () => {
+    if (!companyId || !company?.email) {
+      toast.error("يجب إضافة البريد الإلكتروني للشركة أولاً");
+      return;
+    }
+
+    setSendingMovementAlert(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("check-movement-changes", {
+        body: {
+          company_id: companyId,
+          recipient_email: company.email,
+          company_name: company.name,
+          threshold_percent: movementAlertForm.threshold_percent,
+          comparison_days: movementAlertForm.comparison_days,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.changes_count === 0) {
+        toast.info("لا توجد تغييرات كبيرة في المخزون حالياً");
+      } else {
+        toast.success(`تم إرسال تنبيه التغييرات (${data?.changes_count} منتج)`);
+      }
+    } catch (error: any) {
+      console.error("Error sending movement alert:", error);
+      toast.error("فشل في إرسال التنبيه");
+    } finally {
+      setSendingMovementAlert(false);
+    }
   };
 
   const getPreviewHtml = () => {
@@ -647,6 +774,143 @@ const NotificationSettings = () => {
             <div className="flex justify-start">
               <Button onClick={handleSaveStockSchedule} disabled={saving} className="gap-2">
                 {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                حفظ الإعدادات
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Movement Change Alerts */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              {movementAlertForm.is_active ? (
+                <Badge className="gap-1 bg-emerald-500/20 text-emerald-600 border-0">
+                  <CheckCircle className="w-3 h-3" />
+                  مفعل
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  معطل
+                </Badge>
+              )}
+              <CardTitle className="text-right flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                تنبيهات تغييرات الحركة
+              </CardTitle>
+            </div>
+            <CardDescription className="text-right">
+              إرسال تنبيه عند حدوث تغيير كبير في حركة منتج معين
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Enable/Disable */}
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <Switch
+                checked={movementAlertForm.is_active}
+                onCheckedChange={(checked) =>
+                  setMovementAlertForm({ ...movementAlertForm, is_active: checked })
+                }
+              />
+              <div className="text-right">
+                <p className="font-medium">تفعيل تنبيهات التغييرات</p>
+                <p className="text-sm text-muted-foreground">
+                  إرسال تنبيه عند تغيير حركة منتج بنسبة تتجاوز الحد المحدد
+                </p>
+              </div>
+            </div>
+
+            {/* Settings */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-right block">نسبة التغيير (%)</Label>
+                <Select
+                  value={movementAlertForm.threshold_percent.toString()}
+                  onValueChange={(value) =>
+                    setMovementAlertForm({ ...movementAlertForm, threshold_percent: parseInt(value) })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر النسبة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="25">25% - حساسية عالية</SelectItem>
+                    <SelectItem value="50">50% - حساسية متوسطة</SelectItem>
+                    <SelectItem value="75">75% - حساسية منخفضة</SelectItem>
+                    <SelectItem value="100">100% - تغييرات كبيرة فقط</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-right block">فترة المقارنة (أيام)</Label>
+                <Select
+                  value={movementAlertForm.comparison_days.toString()}
+                  onValueChange={(value) =>
+                    setMovementAlertForm({ ...movementAlertForm, comparison_days: parseInt(value) })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الفترة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 أيام</SelectItem>
+                    <SelectItem value="7">أسبوع</SelectItem>
+                    <SelectItem value="14">أسبوعين</SelectItem>
+                    <SelectItem value="30">شهر</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Last Checked Info */}
+            {movementChangeAlert?.last_checked_at && (
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="gap-1">
+                    <Clock className="w-3 h-3" />
+                    {format(new Date(movementChangeAlert.last_checked_at), "dd/MM/yyyy HH:mm", {
+                      locale: ar,
+                    })}
+                  </Badge>
+                  <p className="text-sm text-muted-foreground">آخر فحص</p>
+                </div>
+              </div>
+            )}
+
+            {/* Info Box */}
+            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <p className="text-sm text-muted-foreground text-right">
+                💡 سيتم مقارنة حركة المخزون في الفترة المحددة بالفترة السابقة لها مباشرة. سيتم إرسال تنبيه للمنتجات التي تجاوز التغيير في حركتها النسبة المحددة.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 justify-start">
+              <Button 
+                onClick={handleSendMovementAlertNow} 
+                disabled={sendingMovementAlert || !company?.email}
+                variant="outline"
+                className="gap-2"
+              >
+                {sendingMovementAlert ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                فحص وإرسال الآن
+              </Button>
+              <Button 
+                onClick={handleSaveMovementAlert} 
+                disabled={savingMovementAlert} 
+                className="gap-2"
+              >
+                {savingMovementAlert ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Save className="w-4 h-4" />
