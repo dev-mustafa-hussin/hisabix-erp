@@ -1,18 +1,34 @@
-import { Bell, Calendar, Grid3X3, HelpCircle, RefreshCcw, Settings, Sun } from "lucide-react";
+import { Bell, Calendar, Grid3X3, HelpCircle, LogOut, RefreshCcw, Settings, Sun } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
+  const { toast } = useToast();
+
   const currentDate = new Date().toLocaleDateString("en-US", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
 
+  const handleLogout = async () => {
+    await signOut();
+    toast({
+      title: "تم تسجيل الخروج",
+      description: "نراك قريباً!",
+    });
+    navigate("/");
+  };
+
   return (
     <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6 fixed top-0 left-0 right-64 z-50">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 text-muted-foreground">
-          <span className="text-sm">محمد مجدي</span>
+          <span className="text-sm">{user?.user_metadata?.full_name || user?.email || "مستخدم"}</span>
           <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded">حالة الاشتراك</span>
         </div>
         <div className="flex items-center gap-2">
@@ -27,6 +43,15 @@ const Header = () => {
       </div>
 
       <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleLogout}
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>تسجيل الخروج</span>
+        </Button>
         <Button variant="ghost" size="sm" className="text-muted-foreground gap-2">
           <Grid3X3 className="w-4 h-4" />
           <span>نقطة بيع</span>
