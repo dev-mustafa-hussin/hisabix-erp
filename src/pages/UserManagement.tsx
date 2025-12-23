@@ -64,7 +64,14 @@ import {
   Mail,
   Calendar,
   Building2,
+  Download,
+  History,
+  Clock,
+  X,
 } from "lucide-react";
+import { createAuditLog } from "@/utils/auditLog";
+import { exportUsersToExcel } from "@/utils/userExport";
+import { Link } from "react-router-dom";
 
 interface CompanyUser {
   id: string;
@@ -116,6 +123,9 @@ const UserManagement = () => {
   // Delete user
   const [deleting, setDeleting] = useState(false);
 
+  // Invitations
+  const [invitations, setInvitations] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user?.id) return;
@@ -149,6 +159,16 @@ const UserManagement = () => {
 
           // Fetch all company users
           await fetchCompanyUsers(companyUser.company_id);
+          
+          // Fetch pending invitations
+          const { data: invData } = await supabase
+            .from("user_invitations")
+            .select("*")
+            .eq("company_id", companyUser.company_id)
+            .eq("status", "pending")
+            .order("created_at", { ascending: false });
+          
+          setInvitations(invData || []);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -205,21 +225,98 @@ const UserManagement = () => {
       return;
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteEmail)) {
+      toast.error("يرجى إدخال بريد إلكتروني صحيح");
+      return;
+    }
+
     setInviting(true);
 
     try {
-      // Note: In a real app, you'd send an invitation email
-      // For now, we'll just show a message about the process
-      toast.info("لدعوة مستخدم جديد، يجب عليه التسجيل أولاً ثم يمكنك إضافته للشركة");
-      setInviteOpen(false);
-      setInviteEmail("");
-      setInviteRole("user");
+      // Get inviter name
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      const { data, error } = await supabase.functions.invoke("send-invitation", {
+        body: {
+          email: inviteEmail.trim(),
+          role: inviteRole,
+          company_id: companyId,
+          company_name: company?.name || "",
+          inviter_name: profile?.full_name || "مستخدم",
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        if (data.error === "invitation_exists") {
+          toast.error(data.message);
+        } else {
+          throw new Error(data.error);
+        }
+      } else {
+        toast.success("تم إرسال الدعوة بنجاح");
+        setInviteOpen(false);
+        setInviteEmail("");
+        setInviteRole("user");
+        await fetchInvitations();
+      }
     } catch (error: any) {
       console.error("Error inviting user:", error);
       toast.error("فشل في إرسال الدعوة");
     } finally {
       setInviting(false);
     }
+  };
+
+  const fetchInvitations = async () => {
+    if (!companyId) return;
+    
+    const { data } = await supabase
+      .from("user_invitations")
+      .select("*")
+      .eq("company_id", companyId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    
+    setInvitations(data || []);
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    try {
+      const { error } = await supabase
+        .from("user_invitations")
+        .update({ status: "cancelled" })
+        .eq("id", invitationId);
+
+      if (error) throw error;
+
+      toast.success("تم إلغاء الدعوة");
+      await fetchInvitations();
+    } catch (error) {
+      console.error("Error cancelling invitation:", error);
+      toast.error("فشل في إلغاء الدعوة");
+    }
+  };
+
+  const handleExportUsers = () => {
+    const exportData = companyUsers.map((u) => ({
+      name: u.profile?.full_name || "غير محدد",
+      email: u.email,
+      phone: u.profile?.phone || undefined,
+      role: u.role,
+      isOwner: u.is_owner,
+      joinedAt: format(new Date(u.created_at), "yyyy-MM-dd", { locale: ar }),
+    }));
+
+    exportUsersToExcel(exportData, company?.name || "company");
+    toast.success("تم تصدير البيانات بنجاح");
   };
 
   const handleEditUser = (companyUser: CompanyUser) => {
@@ -229,11 +326,13 @@ const UserManagement = () => {
   };
 
   const handleSaveRole = async () => {
-    if (!editingUser) return;
+    if (!editingUser || !companyId || !user?.id) return;
 
     setSaving(true);
 
     try {
+      const oldRole = editingUser.role;
+      
       const { error } = await supabase
         .from("company_users")
         .update({ role: editRole })
@@ -241,13 +340,22 @@ const UserManagement = () => {
 
       if (error) throw error;
 
+      // Create audit log
+      await createAuditLog({
+        companyId,
+        userId: user.id,
+        actionType: "role_change",
+        targetType: "user",
+        targetId: editingUser.user_id,
+        oldValue: { role: oldRole, name: editingUser.profile?.full_name },
+        newValue: { role: editRole, name: editingUser.profile?.full_name },
+      });
+
       toast.success("تم تحديث الصلاحية بنجاح");
       setEditOpen(false);
       setEditingUser(null);
 
-      if (companyId) {
-        await fetchCompanyUsers(companyId);
-      }
+      await fetchCompanyUsers(companyId);
     } catch (error: any) {
       console.error("Error updating role:", error);
       toast.error("فشل في تحديث الصلاحية");

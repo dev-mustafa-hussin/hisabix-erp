@@ -21,6 +21,7 @@ import NotificationLogs from "./pages/NotificationLogs";
 import NotificationsDashboard from "./pages/NotificationsDashboard";
 import InventoryReport from "./pages/InventoryReport";
 import UserManagement from "./pages/UserManagement";
+import AuditLogs from "./pages/AuditLogs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -103,6 +104,11 @@ const App = () => (
             <Route path="/user-management" element={
               <ProtectedRoute>
                 <UserManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/audit-logs" element={
+              <ProtectedRoute>
+                <AuditLogs />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

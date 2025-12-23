@@ -22,12 +22,14 @@ import {
   History,
   PieChart,
   BarChart2,
+  ClipboardList,
 } from "lucide-react";
 import Logo from "../Logo";
 
 const menuItems = [
   { icon: Home, label: "الرئيسية", href: "/dashboard" },
   { icon: UserPlus, label: "إدارة المستخدمين", href: "/user-management" },
+  { icon: ClipboardList, label: "سجل التدقيق", href: "/audit-logs" },
   { icon: Users, label: "العملاء", href: "/customers" },
   { icon: Package, label: "المنتجات", href: "/products" },
   { icon: Warehouse, label: "إدارة المخزون", href: "/inventory" },
