@@ -519,19 +519,20 @@ const Invoices = () => {
       .select("*, product:products(name)")
       .eq("invoice_id", invoice.id);
 
-    // Fetch company name
+    // Fetch company name and logo
     const { data: company } = await supabase
       .from("companies")
-      .select("name")
+      .select("name, logo_url")
       .eq("id", companyId)
       .maybeSingle();
 
-    exportInvoiceToPDF({
+    await exportInvoiceToPDF({
       invoice_number: invoice.invoice_number,
       invoice_date: format(new Date(invoice.invoice_date), "dd/MM/yyyy"),
       due_date: invoice.due_date ? format(new Date(invoice.due_date), "dd/MM/yyyy") : null,
       customer_name: invoice.customer?.name || "Cash Customer",
       company_name: company?.name || "EDOXO",
+      company_logo: company?.logo_url || null,
       items: (items || []).map((item: any) => ({
         name: item.product?.name || item.description,
         quantity: item.quantity,

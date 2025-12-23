@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Building2, Save, Loader2, Globe, Phone, MapPin, Calendar, DollarSign } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Building2, Save, Loader2, Globe, Phone, MapPin, Calendar, DollarSign, Upload, X, Image } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/dashboard/Header";
 import { Button } from "@/components/ui/button";
@@ -37,12 +37,16 @@ interface Company {
   timezone: string | null;
   tax_number: string | null;
   financial_year_start: string | null;
+  logo_url: string | null;
 }
 
 const CompanySettings = () => {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -59,6 +63,7 @@ const CompanySettings = () => {
     timezone: "Africa/Cairo",
     tax_number: "",
     financial_year_start: "",
+    logo_url: "",
   });
 
   const fetchCompany = async () => {
@@ -106,9 +111,116 @@ const CompanySettings = () => {
         timezone: companyData.timezone || "Africa/Cairo",
         tax_number: companyData.tax_number || "",
         financial_year_start: companyData.financial_year_start || "",
+        logo_url: companyData.logo_url || "",
       });
+      setLogoPreview(companyData.logo_url);
     }
     setLoading(false);
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !company?.id) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "خطأ",
+        description: "يرجى اختيار ملف صورة",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "خطأ",
+        description: "حجم الصورة يجب أن لا يتجاوز 2 ميجابايت",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${company.id}-${Date.now()}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from("company-logos")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("company-logos")
+        .getPublicUrl(filePath);
+
+      const logoUrl = urlData.publicUrl;
+
+      // Update company record
+      const { error: updateError } = await supabase
+        .from("companies")
+        .update({ logo_url: logoUrl })
+        .eq("id", company.id);
+
+      if (updateError) throw updateError;
+
+      setLogoPreview(logoUrl);
+      setFormData({ ...formData, logo_url: logoUrl });
+
+      toast({
+        title: "تم الرفع",
+        description: "تم رفع شعار الشركة بنجاح",
+      });
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      toast({
+        title: "خطأ",
+        description: "فشل في رفع الشعار",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!company?.id) return;
+
+    setUploadingLogo(true);
+
+    try {
+      // Update company record to remove logo
+      const { error } = await supabase
+        .from("companies")
+        .update({ logo_url: null })
+        .eq("id", company.id);
+
+      if (error) throw error;
+
+      setLogoPreview(null);
+      setFormData({ ...formData, logo_url: "" });
+
+      toast({
+        title: "تم الحذف",
+        description: "تم حذف شعار الشركة",
+      });
+    } catch (error) {
+      console.error("Error removing logo:", error);
+      toast({
+        title: "خطأ",
+        description: "فشل في حذف الشعار",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   useEffect(() => {
@@ -200,6 +312,76 @@ const CompanySettings = () => {
           </Card>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Company Logo */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-right">
+                  <Image className="w-5 h-5 text-primary" />
+                  شعار الشركة
+                </CardTitle>
+                <CardDescription className="text-right">
+                  رفع شعار الشركة لعرضه في الفواتير والتقارير
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-6">
+                  {/* Logo Preview */}
+                  <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted/50 overflow-hidden">
+                    {logoPreview ? (
+                      <img
+                        src={logoPreview}
+                        alt="شعار الشركة"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <Building2 className="w-12 h-12 text-muted-foreground" />
+                    )}
+                  </div>
+
+                  {/* Upload Controls */}
+                  <div className="flex flex-col gap-3">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                      className="gap-2"
+                    >
+                      {uploadingLogo ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4" />
+                      )}
+                      رفع شعار جديد
+                    </Button>
+                    {logoPreview && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleRemoveLogo}
+                        disabled={uploadingLogo}
+                        className="gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        حذف الشعار
+                      </Button>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      الحد الأقصى: 2 ميجابايت - PNG, JPG, WEBP
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Basic Info */}
             <Card>
               <CardHeader>
