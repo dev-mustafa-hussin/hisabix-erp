@@ -414,6 +414,35 @@ const Inventory = () => {
     XLSX.writeFile(workbook, "قالب_استيراد_المنتجات.xlsx");
   };
 
+  const exportToExcel = () => {
+    if (products.length === 0) {
+      toast.error("لا توجد منتجات للتصدير");
+      return;
+    }
+
+    const exportData = products.map((product) => ({
+      "اسم المنتج": product.name,
+      "الاسم بالعربي": product.name_ar || "",
+      "رمز المنتج": product.sku || "",
+      "التصنيف": product.category?.name || "",
+      "سعر التكلفة": product.cost_price,
+      "سعر البيع": product.selling_price,
+      "الكمية": product.quantity,
+      "الحد الأدنى": product.min_quantity,
+      "قيمة المخزون": product.quantity * product.cost_price,
+      "الحالة": product.quantity === 0 ? "نفذ" : product.quantity <= product.min_quantity ? "منخفض" : "متوفر",
+      "نشط": product.is_active ? "نعم" : "لا",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "المخزون");
+    
+    const date = new Date().toLocaleDateString("ar-EG").replace(/\//g, "-");
+    XLSX.writeFile(workbook, `تقرير_المخزون_${date}.xlsx`);
+    toast.success("تم تصدير المخزون بنجاح");
+  };
+
   // Statistics
   const totalProducts = products.length;
   const lowStockProducts = products.filter(
@@ -505,6 +534,15 @@ const Inventory = () => {
             >
               <Download className="w-4 h-4" />
               تحميل القالب
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportToExcel}
+              className="gap-2"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              تصدير Excel
             </Button>
           </div>
           <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
