@@ -18,6 +18,7 @@ import Receivables from "./pages/Receivables";
 import CompanySettings from "./pages/CompanySettings";
 import NotificationSettings from "./pages/NotificationSettings";
 import NotificationLogs from "./pages/NotificationLogs";
+import NotificationsDashboard from "./pages/NotificationsDashboard";
 import InventoryReport from "./pages/InventoryReport";
 import NotFound from "./pages/NotFound";
 
@@ -91,6 +92,11 @@ const App = () => (
             <Route path="/inventory-report" element={
               <ProtectedRoute>
                 <InventoryReport />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications-dashboard" element={
+              <ProtectedRoute>
+                <NotificationsDashboard />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
