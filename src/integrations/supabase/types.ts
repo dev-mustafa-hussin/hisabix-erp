@@ -578,6 +578,50 @@ export type Database = {
           },
         ]
       }
+      stock_alert_schedules: {
+        Row: {
+          company_id: string
+          created_at: string
+          daily_hour: number
+          id: string
+          is_active: boolean
+          last_sent_at: string | null
+          schedule_type: string
+          updated_at: string
+          weekly_day: number | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          daily_hour?: number
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          schedule_type: string
+          updated_at?: string
+          weekly_day?: number | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          daily_hour?: number
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          schedule_type?: string
+          updated_at?: string
+          weekly_day?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_alert_schedules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           company_id: string

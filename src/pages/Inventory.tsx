@@ -73,7 +73,11 @@ import {
   CalendarIcon,
   Filter,
   RotateCcw,
+  Clock,
+  Bell,
+  Settings,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 interface Product {
   id: string;
@@ -113,6 +117,16 @@ interface StockMovementRecord {
   } | null;
 }
 
+interface AlertSchedule {
+  id: string;
+  company_id: string;
+  schedule_type: "daily" | "weekly" | "disabled";
+  weekly_day: number | null;
+  daily_hour: number;
+  is_active: boolean;
+  last_sent_at: string | null;
+}
+
 const Inventory = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -143,6 +157,16 @@ const Inventory = () => {
   const [movementDateTo, setMovementDateTo] = useState<Date | undefined>(undefined);
   const [movementProductFilter, setMovementProductFilter] = useState<string>("all");
   const [movementTypeFilter, setMovementTypeFilter] = useState<string>("all");
+  
+  // Alert schedule
+  const [alertSchedule, setAlertSchedule] = useState<AlertSchedule | null>(null);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({
+    schedule_type: "disabled" as "daily" | "weekly" | "disabled",
+    weekly_day: 0,
+    daily_hour: 9,
+  });
+  const [savingSchedule, setSavingSchedule] = useState(false);
 
   useEffect(() => {
     const fetchCompanyId = async () => {
@@ -178,8 +202,30 @@ const Inventory = () => {
     if (companyId) {
       fetchProducts();
       fetchStockMovements();
+      fetchAlertSchedule();
     }
   }, [companyId]);
+
+  const fetchAlertSchedule = async () => {
+    if (!companyId) return;
+
+    const { data, error } = await supabase
+      .from("stock_alert_schedules")
+      .select("*")
+      .eq("company_id", companyId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching schedule:", error);
+    } else if (data) {
+      setAlertSchedule(data as AlertSchedule);
+      setScheduleForm({
+        schedule_type: data.schedule_type as "daily" | "weekly" | "disabled",
+        weekly_day: data.weekly_day || 0,
+        daily_hour: data.daily_hour,
+      });
+    }
+  };
 
   const fetchStockMovements = async () => {
     if (!companyId) return;
@@ -351,6 +397,64 @@ const Inventory = () => {
     setEditingMinQuantity(product.id);
     setNewMinQuantity(product.min_quantity);
   };
+
+  const handleSaveSchedule = async () => {
+    if (!companyId) return;
+
+    setSavingSchedule(true);
+
+    try {
+      if (alertSchedule) {
+        const { error } = await supabase
+          .from("stock_alert_schedules")
+          .update({
+            schedule_type: scheduleForm.schedule_type,
+            weekly_day: scheduleForm.schedule_type === "weekly" ? scheduleForm.weekly_day : null,
+            daily_hour: scheduleForm.daily_hour,
+            is_active: scheduleForm.schedule_type !== "disabled",
+          })
+          .eq("id", alertSchedule.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("stock_alert_schedules")
+          .insert({
+            company_id: companyId,
+            schedule_type: scheduleForm.schedule_type,
+            weekly_day: scheduleForm.schedule_type === "weekly" ? scheduleForm.weekly_day : null,
+            daily_hour: scheduleForm.daily_hour,
+            is_active: scheduleForm.schedule_type !== "disabled",
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success("تم حفظ إعدادات الجدولة بنجاح");
+      setIsScheduleDialogOpen(false);
+      fetchAlertSchedule();
+    } catch (error: any) {
+      console.error("Error saving schedule:", error);
+      toast.error("فشل في حفظ إعدادات الجدولة");
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
+
+  const weekDays = [
+    { value: 0, label: "الأحد" },
+    { value: 1, label: "الإثنين" },
+    { value: 2, label: "الثلاثاء" },
+    { value: 3, label: "الأربعاء" },
+    { value: 4, label: "الخميس" },
+    { value: 5, label: "الجمعة" },
+    { value: 6, label: "السبت" },
+  ];
+
+  const hours = Array.from({ length: 24 }, (_, i) => ({
+    value: i,
+    label: `${i.toString().padStart(2, "0")}:00`,
+  }));
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -694,20 +798,36 @@ const Inventory = () => {
           <Card className="border-amber-500/50 bg-amber-500/5">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSendStockAlert}
-                  disabled={sendingAlert}
-                  className="gap-2"
-                >
-                  {sendingAlert ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Mail className="w-4 h-4" />
-                  )}
-                  إرسال تنبيه بالبريد
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSendStockAlert}
+                    disabled={sendingAlert}
+                    className="gap-2"
+                  >
+                    {sendingAlert ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Mail className="w-4 h-4" />
+                    )}
+                    إرسال تنبيه بالبريد
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsScheduleDialogOpen(true)}
+                    className="gap-2"
+                  >
+                    <Clock className="w-4 h-4" />
+                    جدولة التنبيهات
+                    {alertSchedule && alertSchedule.schedule_type !== "disabled" && (
+                      <Badge variant="secondary" className="mr-1 text-xs">
+                        {alertSchedule.schedule_type === "daily" ? "يومي" : "أسبوعي"}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
                 <CardTitle className="flex items-center gap-2 text-amber-600 text-right">
                   <AlertTriangle className="w-5 h-5" />
                   تنبيهات المخزون
@@ -1182,6 +1302,112 @@ const Inventory = () => {
                   "إضافة"
                 ) : (
                   "سحب"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Dialog */}
+      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-right flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
+              جدولة تنبيهات المخزون
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>نوع الجدولة</Label>
+              <Select
+                value={scheduleForm.schedule_type}
+                onValueChange={(value: "daily" | "weekly" | "disabled") =>
+                  setScheduleForm({ ...scheduleForm, schedule_type: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر نوع الجدولة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="disabled">معطل</SelectItem>
+                  <SelectItem value="daily">يومياً</SelectItem>
+                  <SelectItem value="weekly">أسبوعياً</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {scheduleForm.schedule_type === "weekly" && (
+              <div className="space-y-2">
+                <Label>يوم الإرسال</Label>
+                <Select
+                  value={scheduleForm.weekly_day.toString()}
+                  onValueChange={(value) =>
+                    setScheduleForm({ ...scheduleForm, weekly_day: parseInt(value) })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر اليوم" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {weekDays.map((day) => (
+                      <SelectItem key={day.value} value={day.value.toString()}>
+                        {day.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {scheduleForm.schedule_type !== "disabled" && (
+              <div className="space-y-2">
+                <Label>وقت الإرسال (بتوقيت UTC)</Label>
+                <Select
+                  value={scheduleForm.daily_hour.toString()}
+                  onValueChange={(value) =>
+                    setScheduleForm({ ...scheduleForm, daily_hour: parseInt(value) })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الوقت" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hours.map((hour) => (
+                      <SelectItem key={hour.value} value={hour.value.toString()}>
+                        {hour.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {alertSchedule?.last_sent_at && (
+              <div className="p-3 bg-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">آخر إرسال:</p>
+                <p className="font-medium">
+                  {format(new Date(alertSchedule.last_sent_at), "dd/MM/yyyy HH:mm", {
+                    locale: ar,
+                  })}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setIsScheduleDialogOpen(false)}
+              >
+                إلغاء
+              </Button>
+              <Button onClick={handleSaveSchedule} disabled={savingSchedule}>
+                {savingSchedule ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "حفظ"
                 )}
               </Button>
             </div>
