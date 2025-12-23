@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/dashboard/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import * as XLSX from "xlsx";
 import {
   Table,
   TableBody,
@@ -52,6 +53,9 @@ import {
   Edit,
   Save,
   X,
+  Upload,
+  FileSpreadsheet,
+  Download,
 } from "lucide-react";
 
 interface Product {
@@ -114,6 +118,8 @@ const Inventory = () => {
   const [editingMinQuantity, setEditingMinQuantity] = useState<string | null>(null);
   const [newMinQuantity, setNewMinQuantity] = useState<number>(0);
   const [companyData, setCompanyData] = useState<{ name: string; email: string | null } | null>(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchCompanyId = async () => {
@@ -323,6 +329,91 @@ const Inventory = () => {
     setNewMinQuantity(product.min_quantity);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !companyId || !user?.id) return;
+
+    setImporting(true);
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        toast.error("الملف فارغ أو لا يحتوي على بيانات صالحة");
+        setImporting(false);
+        return;
+      }
+
+      const productsToInsert = jsonData.map((row: any) => ({
+        company_id: companyId,
+        name: row["اسم المنتج"] || row["name"] || row["Name"] || row["المنتج"] || "",
+        name_ar: row["الاسم بالعربي"] || row["name_ar"] || null,
+        sku: row["SKU"] || row["sku"] || row["رمز المنتج"] || null,
+        barcode: row["الباركود"] || row["barcode"] || row["Barcode"] || null,
+        cost_price: parseFloat(row["سعر التكلفة"] || row["cost_price"] || row["Cost Price"] || 0),
+        selling_price: parseFloat(row["سعر البيع"] || row["selling_price"] || row["Selling Price"] || 0),
+        quantity: parseInt(row["الكمية"] || row["quantity"] || row["Quantity"] || 0),
+        min_quantity: parseInt(row["الحد الأدنى"] || row["min_quantity"] || row["Min Quantity"] || 0),
+        unit: row["الوحدة"] || row["unit"] || row["Unit"] || "piece",
+        description: row["الوصف"] || row["description"] || row["Description"] || null,
+        is_active: true,
+      }));
+
+      // Filter out products without a name
+      const validProducts = productsToInsert.filter((p) => p.name && p.name.trim() !== "");
+
+      if (validProducts.length === 0) {
+        toast.error("لا توجد منتجات صالحة للاستيراد");
+        setImporting(false);
+        return;
+      }
+
+      const { error } = await supabase.from("products").insert(validProducts);
+
+      if (error) {
+        console.error("Error importing products:", error);
+        toast.error("فشل في استيراد المنتجات");
+      } else {
+        toast.success(`تم استيراد ${validProducts.length} منتج بنجاح`);
+        fetchProducts();
+      }
+    } catch (error) {
+      console.error("Error reading file:", error);
+      toast.error("فشل في قراءة الملف");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const downloadTemplate = () => {
+    const templateData = [
+      {
+        "اسم المنتج": "منتج مثال",
+        "الاسم بالعربي": "منتج مثال",
+        "رمز المنتج": "SKU001",
+        "الباركود": "1234567890123",
+        "سعر التكلفة": 100,
+        "سعر البيع": 150,
+        "الكمية": 50,
+        "الحد الأدنى": 10,
+        "الوحدة": "piece",
+        "الوصف": "وصف المنتج",
+      },
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "المنتجات");
+    XLSX.writeFile(workbook, "قالب_استيراد_المنتجات.xlsx");
+  };
+
   // Statistics
   const totalProducts = products.length;
   const lowStockProducts = products.filter(
@@ -375,14 +466,46 @@ const Inventory = () => {
       <main className="mr-64 pt-14 p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="relative w-72">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="بحث في المخزون..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10"
+          <div className="flex items-center gap-3">
+            <div className="relative w-72">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="بحث في المخزون..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pr-10"
+              />
+            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
             />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="gap-2"
+            >
+              {importing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              استيراد Excel
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={downloadTemplate}
+              className="gap-2 text-muted-foreground"
+            >
+              <Download className="w-4 h-4" />
+              تحميل القالب
+            </Button>
           </div>
           <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
             <Package className="w-6 h-6 text-primary" />
