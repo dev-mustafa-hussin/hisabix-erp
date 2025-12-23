@@ -1,51 +1,96 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading, signIn } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
+    
+    if (!email || !password) {
       toast({
         title: "خطأ",
-        description: "يرجى إدخال اسم المستخدم وكلمة السر",
+        description: "يرجى إدخال البريد الإلكتروني وكلمة السر",
         variant: "destructive",
       });
       return;
     }
-    // Demo login - navigate to dashboard
+
+    setIsLoading(true);
+    const { error } = await signIn(email, password);
+    setIsLoading(false);
+
+    if (error) {
+      let errorMessage = "حدث خطأ أثناء تسجيل الدخول";
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "البريد الإلكتروني أو كلمة السر غير صحيحة";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "يرجى تأكيد البريد الإلكتروني أولاً";
+      }
+      
+      toast({
+        title: "خطأ في تسجيل الدخول",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "تم تسجيل الدخول بنجاح",
+      description: "مرحباً بك في HisabiX",
+    });
     navigate("/dashboard");
   };
+
+  if (loading) {
+    return (
+      <AuthLayout>
+        <div className="flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout>
       <div className="w-full max-w-md card-glass rounded-2xl p-8 animate-slide-up">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Username */}
+          {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-card-foreground text-sm font-medium block text-left">
-              Username
+            <Label htmlFor="email" className="text-card-foreground text-sm font-medium block text-left">
+              البريد الإلكتروني
             </Label>
             <Input
-              id="username"
-              type="text"
-              placeholder="إسم المستخدم"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              placeholder="example@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="bg-card border-border/50 text-card-foreground placeholder:text-muted-foreground/60 h-12 text-right"
+              dir="ltr"
             />
           </div>
 
@@ -56,7 +101,7 @@ const Login = () => {
                 نسيت كلمة السر؟
               </Link>
               <Label htmlFor="password" className="text-card-foreground text-sm font-medium">
-                Password
+                كلمة السر
               </Label>
             </div>
             <div className="relative">
@@ -93,9 +138,17 @@ const Login = () => {
           {/* Submit Button */}
           <Button
             type="submit"
+            disabled={isLoading}
             className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg rounded-full"
           >
-            تسجيل الدخول
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                جاري تسجيل الدخول...
+              </>
+            ) : (
+              "تسجيل الدخول"
+            )}
           </Button>
 
           {/* Contact */}
