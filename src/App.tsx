@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
+import Invoices from "./pages/Invoices";
 import CompanySettings from "./pages/CompanySettings";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +45,11 @@ const App = () => (
             <Route path="/sales" element={
               <ProtectedRoute>
                 <Sales />
+              </ProtectedRoute>
+            } />
+            <Route path="/invoices" element={
+              <ProtectedRoute>
+                <Invoices />
               </ProtectedRoute>
             } />
             <Route path="/company-settings" element={
