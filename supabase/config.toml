@@ -1,4 +1,4 @@
-project_id = "vbzqgfftiedaigbknoxw"
+project_id = "pfdeqgssdkpqexoewyyn"
 
 [functions.send-invoice-reminder]
 verify_jwt = false
