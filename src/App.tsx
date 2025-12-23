@@ -18,6 +18,7 @@ import Receivables from "./pages/Receivables";
 import CompanySettings from "./pages/CompanySettings";
 import NotificationSettings from "./pages/NotificationSettings";
 import NotificationLogs from "./pages/NotificationLogs";
+import InventoryReport from "./pages/InventoryReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,6 +86,11 @@ const App = () => (
             <Route path="/notification-logs" element={
               <ProtectedRoute>
                 <NotificationLogs />
+              </ProtectedRoute>
+            } />
+            <Route path="/inventory-report" element={
+              <ProtectedRoute>
+                <InventoryReport />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

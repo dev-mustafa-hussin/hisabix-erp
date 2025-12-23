@@ -20,6 +20,7 @@ import {
   Megaphone,
   Bell,
   History,
+  PieChart,
 } from "lucide-react";
 import Logo from "../Logo";
 
@@ -29,6 +30,7 @@ const menuItems = [
   { icon: Users, label: "العملاء", href: "/customers" },
   { icon: Package, label: "المنتجات", href: "/products" },
   { icon: Warehouse, label: "إدارة المخزون", href: "/inventory" },
+  { icon: PieChart, label: "تقرير المخزون", href: "/inventory-report" },
   { icon: CreditCard, label: "المستحقات", href: "/receivables" },
   { icon: FileText, label: "الفواتير", href: "/invoices" },
   { icon: ShoppingCart, label: "المشتريات", href: "#", hasSubmenu: true },
