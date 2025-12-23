@@ -24,6 +24,7 @@ import InventoryReport from "./pages/InventoryReport";
 import UserManagement from "./pages/UserManagement";
 import AuditLogs from "./pages/AuditLogs";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,11 @@ const App = () => (
               <Route path="/audit-logs" element={
                 <ProtectedRoute>
                   <AuditLogs />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile-settings" element={
+                <ProtectedRoute>
+                  <ProfileSettings />
                 </ProtectedRoute>
               } />
               <Route path="*" element={<NotFound />} />
