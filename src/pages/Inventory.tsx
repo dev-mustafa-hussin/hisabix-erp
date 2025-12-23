@@ -443,6 +443,31 @@ const Inventory = () => {
     toast.success("تم تصدير المخزون بنجاح");
   };
 
+  const exportMovementsToExcel = () => {
+    if (stockMovements.length === 0) {
+      toast.error("لا توجد حركات للتصدير");
+      return;
+    }
+
+    const exportData = stockMovements.map((movement) => ({
+      "التاريخ": format(new Date(movement.created_at), "dd/MM/yyyy HH:mm", { locale: ar }),
+      "المنتج": movement.product?.name_ar || movement.product?.name || "-",
+      "نوع الحركة": movement.movement_type === "in" ? "إضافة" : "سحب",
+      "الكمية": movement.quantity,
+      "الكمية قبل": movement.quantity_before,
+      "الكمية بعد": movement.quantity_after,
+      "ملاحظات": movement.notes || "",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "حركات المخزون");
+    
+    const date = new Date().toLocaleDateString("ar-EG").replace(/\//g, "-");
+    XLSX.writeFile(workbook, `سجل_حركات_المخزون_${date}.xlsx`);
+    toast.success("تم تصدير سجل الحركات بنجاح");
+  };
+
   // Statistics
   const totalProducts = products.length;
   const lowStockProducts = products.filter(
@@ -813,10 +838,22 @@ const Inventory = () => {
           <TabsContent value="movements" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-right flex items-center gap-2">
-                  <History className="w-5 h-5 text-primary" />
-                  سجل حركات المخزون
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportMovementsToExcel}
+                    className="gap-2"
+                    disabled={stockMovements.length === 0}
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    تصدير Excel
+                  </Button>
+                  <CardTitle className="text-right flex items-center gap-2">
+                    <History className="w-5 h-5 text-primary" />
+                    سجل حركات المخزون
+                  </CardTitle>
+                </div>
                 <CardDescription className="text-right">
                   جميع عمليات الإضافة والسحب من المخزون
                 </CardDescription>
