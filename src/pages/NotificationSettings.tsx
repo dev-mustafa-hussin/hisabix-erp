@@ -56,6 +56,7 @@ import {
   TrendingUp,
   Send,
 } from "lucide-react";
+import PushNotificationManager from "@/components/PushNotificationManager";
 
 interface AlertSchedule {
   id: string;
@@ -1019,6 +1020,11 @@ const NotificationSettings = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Push Notifications */}
+        {companyId && (
+          <PushNotificationManager companyId={companyId} />
+        )}
 
         {/* Invoice Reminders */}
         <Card>
