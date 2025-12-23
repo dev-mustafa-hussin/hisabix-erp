@@ -20,6 +20,7 @@ import NotificationSettings from "./pages/NotificationSettings";
 import NotificationLogs from "./pages/NotificationLogs";
 import NotificationsDashboard from "./pages/NotificationsDashboard";
 import InventoryReport from "./pages/InventoryReport";
+import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +98,11 @@ const App = () => (
             <Route path="/notifications-dashboard" element={
               <ProtectedRoute>
                 <NotificationsDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/user-management" element={
+              <ProtectedRoute>
+                <UserManagement />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
