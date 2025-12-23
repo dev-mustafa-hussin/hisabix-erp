@@ -22,12 +22,13 @@ import {
 import Logo from "../Logo";
 
 const menuItems = [
-  { icon: Home, label: "الرئيسية", href: "/dashboard", active: true },
+  { icon: Home, label: "الرئيسية", href: "/dashboard" },
   { icon: UserPlus, label: "إدارة المستخدمين", href: "#" },
+  { icon: Users, label: "العملاء", href: "/customers" },
+  { icon: Package, label: "المنتجات", href: "/products" },
   { icon: CreditCard, label: "دورة الأموال", href: "#" },
   { icon: FileText, label: "المعاملات", href: "#" },
   { icon: ShoppingCart, label: "المشتريات", href: "#", hasSubmenu: true },
-  { icon: Package, label: "المخزون", href: "#", hasSubmenu: true },
   { icon: Warehouse, label: "دخول المخزن", href: "#" },
   { icon: Store, label: "المبيعات", href: "#" },
   { icon: Receipt, label: "المصروفات", href: "#" },
