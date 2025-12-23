@@ -14,6 +14,7 @@ interface InvoiceData {
   due_date?: string | null;
   customer_name: string;
   company_name: string;
+  company_logo?: string | null;
   items: {
     name: string;
     quantity: number;
@@ -30,23 +31,61 @@ interface InvoiceData {
   notes?: string | null;
 }
 
-export const exportInvoiceToPDF = (invoice: InvoiceData) => {
+// Helper function to load image as base64
+const loadImageAsBase64 = (url: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      } else {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+};
+
+export const exportInvoiceToPDF = async (invoice: InvoiceData) => {
   const doc = new jsPDF();
+  
+  let headerStartY = 20;
+  
+  // Add logo if available
+  if (invoice.company_logo) {
+    try {
+      const logoBase64 = await loadImageAsBase64(invoice.company_logo);
+      if (logoBase64) {
+        // Add logo centered at top
+        doc.addImage(logoBase64, "PNG", 85, 10, 40, 20);
+        headerStartY = 35;
+      }
+    } catch (error) {
+      console.error("Error loading logo:", error);
+    }
+  }
   
   // Header
   doc.setFontSize(20);
   doc.setTextColor(33, 37, 41);
-  doc.text(invoice.company_name, 105, 20, { align: "center" });
+  doc.text(invoice.company_name, 105, headerStartY, { align: "center" });
   
   doc.setFontSize(16);
   doc.setTextColor(100, 100, 100);
-  doc.text("Invoice / Faktura", 105, 30, { align: "center" });
+  doc.text("Invoice / Faktura", 105, headerStartY + 10, { align: "center" });
   
   // Invoice info
   doc.setFontSize(10);
   doc.setTextColor(33, 37, 41);
   
-  const infoStartY = 45;
+  const infoStartY = headerStartY + 25;
   doc.text(`Invoice Number: ${invoice.invoice_number}`, 20, infoStartY);
   doc.text(`Date: ${invoice.invoice_date}`, 20, infoStartY + 7);
   if (invoice.due_date) {
@@ -64,7 +103,7 @@ export const exportInvoiceToPDF = (invoice: InvoiceData) => {
   ]);
   
   doc.autoTable({
-    startY: infoStartY + 25,
+    startY: infoStartY + (invoice.due_date ? 25 : 18),
     head: [["Item", "Quantity", "Unit Price", "Total"]],
     body: tableData,
     theme: "striped",
