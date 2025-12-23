@@ -90,6 +90,9 @@ interface MovementChangeAlert {
   comparison_days: number;
   recipient_email: string | null;
   last_checked_at: string | null;
+  schedule_type: string;
+  schedule_hour: number;
+  schedule_day: number | null;
 }
 
 const defaultTemplates: Record<string, { subject: string; body_html: string }> = {
@@ -186,6 +189,9 @@ const NotificationSettings = () => {
     is_active: false,
     threshold_percent: 50,
     comparison_days: 7,
+    schedule_type: "disabled" as "daily" | "weekly" | "disabled",
+    schedule_hour: 9,
+    schedule_day: 0,
   });
   const [savingMovementAlert, setSavingMovementAlert] = useState(false);
   const [sendingMovementAlert, setSendingMovementAlert] = useState(false);
@@ -257,6 +263,9 @@ const NotificationSettings = () => {
             is_active: movementAlertData.is_active,
             threshold_percent: movementAlertData.threshold_percent,
             comparison_days: movementAlertData.comparison_days,
+            schedule_type: (movementAlertData.schedule_type || "disabled") as "daily" | "weekly" | "disabled",
+            schedule_hour: movementAlertData.schedule_hour || 9,
+            schedule_day: movementAlertData.schedule_day || 0,
           });
         }
       }
@@ -412,6 +421,9 @@ const NotificationSettings = () => {
             threshold_percent: movementAlertForm.threshold_percent,
             comparison_days: movementAlertForm.comparison_days,
             recipient_email: company.email,
+            schedule_type: movementAlertForm.schedule_type,
+            schedule_hour: movementAlertForm.schedule_hour,
+            schedule_day: movementAlertForm.schedule_type === "weekly" ? movementAlertForm.schedule_day : null,
           })
           .eq("id", movementChangeAlert.id);
 
@@ -425,6 +437,9 @@ const NotificationSettings = () => {
             threshold_percent: movementAlertForm.threshold_percent,
             comparison_days: movementAlertForm.comparison_days,
             recipient_email: company.email,
+            schedule_type: movementAlertForm.schedule_type,
+            schedule_hour: movementAlertForm.schedule_hour,
+            schedule_day: movementAlertForm.schedule_type === "weekly" ? movementAlertForm.schedule_day : null,
           });
 
         if (error) throw error;
@@ -866,6 +881,90 @@ const NotificationSettings = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Scheduling Options */}
+            <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-4">
+              <div className="flex items-center gap-2 justify-end">
+                <h4 className="font-semibold">جدولة تلقائية</h4>
+                <Clock className="w-4 h-4 text-primary" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-right block">نوع الجدولة</Label>
+                  <Select
+                    value={movementAlertForm.schedule_type}
+                    onValueChange={(value: "daily" | "weekly" | "disabled") =>
+                      setMovementAlertForm({ ...movementAlertForm, schedule_type: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر نوع الجدولة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="disabled">معطل</SelectItem>
+                      <SelectItem value="daily">يومياً</SelectItem>
+                      <SelectItem value="weekly">أسبوعياً</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {movementAlertForm.schedule_type !== "disabled" && (
+                  <div className="space-y-2">
+                    <Label className="text-right block">وقت الإرسال (UTC)</Label>
+                    <Select
+                      value={movementAlertForm.schedule_hour.toString()}
+                      onValueChange={(value) =>
+                        setMovementAlertForm({ ...movementAlertForm, schedule_hour: parseInt(value) })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر الوقت" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hours.map((hour) => (
+                          <SelectItem key={hour.value} value={hour.value.toString()}>
+                            {hour.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              {movementAlertForm.schedule_type === "weekly" && (
+                <div className="space-y-2">
+                  <Label className="text-right block">يوم الإرسال</Label>
+                  <Select
+                    value={movementAlertForm.schedule_day.toString()}
+                    onValueChange={(value) =>
+                      setMovementAlertForm({ ...movementAlertForm, schedule_day: parseInt(value) })
+                    }
+                  >
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue placeholder="اختر اليوم" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {weekDays.map((day) => (
+                        <SelectItem key={day.value} value={day.value.toString()}>
+                          {day.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {movementAlertForm.schedule_type !== "disabled" && (
+                <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
+                  <p className="text-sm text-emerald-700 text-right">
+                    ✅ سيتم إرسال التنبيهات تلقائياً {movementAlertForm.schedule_type === "daily" ? "يومياً" : "أسبوعياً"} الساعة {movementAlertForm.schedule_hour.toString().padStart(2, "0")}:00 UTC
+                    {movementAlertForm.schedule_type === "weekly" && ` يوم ${weekDays.find(d => d.value === movementAlertForm.schedule_day)?.label}`}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Last Checked Info */}
