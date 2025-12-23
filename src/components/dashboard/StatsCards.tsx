@@ -61,32 +61,33 @@ const stats = [
 
 const StatsCards = () => {
   return (
-    <div className="bg-card rounded-xl p-6 shadow-sm border border-border">
+    <div className="bg-card rounded-xl p-4 lg:p-6 shadow-sm border border-border">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-muted-foreground flex items-center gap-2">
+        <p className="text-xs lg:text-sm text-muted-foreground flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-destructive" />
-          تنبيه: قم بأخذ نسخة احتياطية من البيانات بشكل دوري
+          <span className="hidden sm:inline">تنبيه: قم بأخذ نسخة احتياطية من البيانات بشكل دوري</span>
+          <span className="sm:hidden">تنبيه مهم</span>
         </p>
       </div>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
             <div
               key={index}
-              className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl"
+              className="flex items-center gap-2 lg:gap-3 p-3 lg:p-4 bg-muted/30 rounded-xl"
             >
-              <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                <Icon className="w-5 h-5 text-white" />
+              <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-xl ${stat.color} flex items-center justify-center flex-shrink-0`}>
+                <Icon className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
               </div>
-              <div className="text-left">
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <p className="text-lg font-semibold text-card-foreground">{stat.value}</p>
+              <div className="text-left min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground truncate">{stat.label}</p>
+                <p className="text-sm lg:text-lg font-semibold text-card-foreground">{stat.value}</p>
               </div>
               {stat.trend === "up" ? (
-                <TrendingUp className="w-4 h-4 text-success mr-auto" />
+                <TrendingUp className="w-3 h-3 lg:w-4 lg:h-4 text-success flex-shrink-0" />
               ) : (
-                <TrendingDown className="w-4 h-4 text-destructive mr-auto" />
+                <TrendingDown className="w-3 h-3 lg:w-4 lg:h-4 text-destructive flex-shrink-0" />
               )}
             </div>
           );
