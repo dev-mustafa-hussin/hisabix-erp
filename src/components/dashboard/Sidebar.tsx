@@ -97,24 +97,45 @@ const menuItems: MenuItem[] = [
 
 const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
   const location = useLocation();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
 
   const toggleSubmenu = (label: string) => {
+    if (isCollapsed) return; // Don't expand in collapsed mode
     setExpandedMenus((prev) =>
       prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
     );
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Logo */}
-      <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center transition-transform duration-300 hover:rotate-12">
+      <div
+        className={cn(
+          "p-4 border-b border-sidebar-border flex items-center justify-between transition-all duration-300",
+          isCollapsed ? "px-2 justify-center" : "px-4"
+        )}
+      >
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 hover:rotate-12">
             <span className="text-primary-foreground font-bold text-sm">E</span>
           </div>
-          <span className="font-bold text-sidebar-foreground">EDOXO</span>
+          {!isCollapsed && (
+            <span className="font-bold text-sidebar-foreground animate-in fade-in slide-in-from-right-2">
+              EDOXO
+            </span>
+          )}
         </div>
+        {!onClose && !isCollapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="hidden lg:flex transition-colors duration-200 hover:bg-sidebar-accent/50 group"
+          >
+            <MoreVertical className="w-5 h-5 text-sidebar-foreground/50 group-hover:text-sidebar-primary" />
+          </Button>
+        )}
         {onClose && (
           <Button
             variant="ghost"
@@ -128,7 +149,7 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
       </div>
 
       {/* Menu */}
-      <nav className="p-2 flex-1 overflow-y-auto">
+      <nav className="p-2 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {menuItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
@@ -143,30 +164,40 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
               {item.hasSubmenu ? (
                 <button
                   onClick={() => toggleSubmenu(item.label)}
+                  title={isCollapsed ? item.label : undefined}
                   className={cn(
-                    "w-full flex items-center justify-between px-4 py-2.5 rounded-lg mb-1 transition-all duration-200 text-sm group hover:translate-x-1",
+                    "w-full flex items-center justify-between py-2.5 rounded-lg mb-1 transition-all duration-200 text-sm group hover:translate-x-1",
+                    isCollapsed ? "px-3 justify-center" : "px-4",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-primary font-medium"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
-                    <span>{item.label}</span>
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 transition-transform duration-300",
-                      isExpanded && "rotate-180"
+                    <Icon className="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                    {!isCollapsed && (
+                      <span className="animate-in fade-in slide-in-from-right-2">
+                        {item.label}
+                      </span>
                     )}
-                  />
+                  </div>
+                  {!isCollapsed && (
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 transition-transform duration-300",
+                        isExpanded && "rotate-180"
+                      )}
+                    />
+                  )}
                 </button>
               ) : (
                 <Link
                   to={item.href}
                   onClick={onClose}
+                  title={isCollapsed ? item.label : undefined}
                   className={cn(
-                    "flex items-center justify-between px-4 py-2.5 rounded-lg mb-1 transition-all duration-200 text-sm group hover:translate-x-1",
+                    "flex items-center justify-between py-2.5 rounded-lg mb-1 transition-all duration-200 text-sm group hover:translate-x-1",
+                    isCollapsed ? "px-3 justify-center" : "px-4",
                     isActive
                       ? "bg-sidebar-accent text-sidebar-primary font-medium shadow-sm"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -175,11 +206,15 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
                   <div className="flex items-center gap-3">
                     <Icon
                       className={cn(
-                        "w-5 h-5 transition-transform duration-200 group-hover:scale-110",
+                        "w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110",
                         isActive && "animate-bounce-in"
                       )}
                     />
-                    <span>{item.label}</span>
+                    {!isCollapsed && (
+                      <span className="animate-in fade-in slide-in-from-right-2">
+                        {item.label}
+                      </span>
+                    )}
                   </div>
                 </Link>
               )}
@@ -240,9 +275,26 @@ export const MobileSidebarTrigger = () => {
 };
 
 const Sidebar = () => {
+  const { isCollapsed, toggleSidebar } = useSidebar();
+
   return (
-    <aside className="w-64 bg-sidebar h-screen fixed right-0 top-0 border-l border-sidebar-border overflow-y-auto hidden lg:block transition-colors duration-300">
+    <aside
+      className={cn(
+        "bg-sidebar h-screen fixed right-0 top-0 border-l border-sidebar-border overflow-y-auto hidden lg:block transition-all duration-300 z-40",
+        isCollapsed ? "w-16" : "w-64"
+      )}
+    >
       <SidebarContent />
+      {isCollapsed && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          className="absolute top-4 left-4 transition-all duration-200 hover:scale-110"
+        >
+          <Menu className="w-5 h-5 text-sidebar-foreground/50" />
+        </Button>
+      )}
     </aside>
   );
 };
