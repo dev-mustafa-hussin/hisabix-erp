@@ -944,5 +944,3 @@ const InventoryReport = () => {
   );
 };
 
-export default InventoryReport;
-```
