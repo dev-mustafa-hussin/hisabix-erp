@@ -25,11 +25,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 const Header = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { isCollapsed } = useSidebar();
 
   const currentDate = new Date().toLocaleDateString("en-US", {
     day: "2-digit",
@@ -59,7 +61,12 @@ const Header = () => {
   };
 
   return (
-    <header className="h-14 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 fixed top-0 left-0 right-0 lg:right-64 z-50 transition-colors duration-300">
+    <header
+      className={cn(
+        "h-14 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        isCollapsed ? "lg:right-16" : "lg:right-64"
+      )}
+    >
       {/* Right Side (Logic Start) */}
       <div className="flex items-center gap-2 lg:gap-4">
         <MobileSidebarTrigger />
