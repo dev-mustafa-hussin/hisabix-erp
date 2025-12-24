@@ -944,6 +944,7 @@ const UserManagement = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </div>
         </>
       )}
     </DashboardLayout>
