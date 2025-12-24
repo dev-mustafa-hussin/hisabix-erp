@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -318,9 +317,7 @@ const Sales = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      <Sidebar />
-      <div className="mr-64">
-        <Header />
+      <DashboardLayout>
         <main className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -625,7 +622,7 @@ const Sales = () => {
           </Dialog>
         </main>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

@@ -528,24 +528,8 @@ const Products = () => {
         </div>
       </main>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteProduct} onOpenChange={() => setDeleteProduct(null)}>
-        <AlertDialogContent dir="rtl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
-            <AlertDialogDescription>
-              سيتم حذف المنتج "{deleteProduct?.name_ar || deleteProduct?.name}" نهائياً. هذا الإجراء لا يمكن التراجع عنه.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              حذف
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </DashboardLayout>
   );
 };
 

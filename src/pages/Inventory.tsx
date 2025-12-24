@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import * as XLSX from "xlsx";
@@ -673,13 +672,8 @@ const Inventory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Sidebar />
-      <Header />
-
-      <main className="mr-64 pt-14 p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <DashboardLayout>
+      <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="relative w-72">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -1414,7 +1408,7 @@ const Inventory = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardLayout>
   );
 };
 
