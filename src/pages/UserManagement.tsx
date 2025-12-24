@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -413,37 +412,20 @@ const UserManagement = () => {
     return name.split(" ").map(n => n[0]).join("").slice(0, 2);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Header />
-          <main className="flex-1 p-6 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </main>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Header />
-        <main className="flex-1 p-6 space-y-6 overflow-auto" dir="rtl">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Users className="w-7 h-7 text-primary" />
-                إدارة المستخدمين
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                إدارة أعضاء الفريق وصلاحياتهم في {company?.name}
-              </p>
-            </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Users className="w-7 h-7 text-primary" />
+              إدارة المستخدمين
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              إدارة أعضاء الفريق وصلاحياتهم في {company?.name}
+            </p>
+          </div>
 
             {(isOwner || isAdmin) && (
               <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -831,7 +813,7 @@ const UserManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </DashboardLayout>
   );
 };
 

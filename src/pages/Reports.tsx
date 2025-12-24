@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -464,237 +463,232 @@ const Reports = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <Sidebar />
-      <div className="mr-64">
-        <Header />
-        <main className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">التقارير</h1>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleExportPDF}>
-                <Download className="w-4 h-4 ml-2" />
-                تصدير PDF
-              </Button>
-              <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7">آخر 7 أيام</SelectItem>
-                  <SelectItem value="30">آخر 30 يوم</SelectItem>
-                  <SelectItem value="90">آخر 3 أشهر</SelectItem>
-                  <SelectItem value="365">آخر سنة</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <DashboardLayout>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">التقارير</h1>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportPDF}>
+            <Download className="w-4 h-4 ml-2" />
+            تصدير PDF
+          </Button>
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">آخر 7 أيام</SelectItem>
+              <SelectItem value="30">آخر 30 يوم</SelectItem>
+              <SelectItem value="90">آخر 3 أشهر</SelectItem>
+              <SelectItem value="365">آخر سنة</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12">جاري التحميل...</div>
+      ) : (
+        <div className="space-y-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              title="إجمالي المبيعات"
+              value={totalSales}
+              icon={DollarSign}
+              growth={salesGrowth}
+              suffix=" جنيه"
+            />
+            <StatCard
+              title="عدد الفواتير"
+              value={totalInvoices}
+              icon={FileText}
+              growth={invoicesGrowth}
+            />
+            <StatCard
+              title="عدد العملاء"
+              value={totalCustomers}
+              icon={Users}
+            />
+            <StatCard
+              title="عدد المنتجات"
+              value={totalProducts}
+              icon={Package}
+            />
           </div>
 
-          {loading ? (
-            <div className="text-center py-12">جاري التحميل...</div>
-          ) : (
-            <div className="space-y-6">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                  title="إجمالي المبيعات"
-                  value={totalSales}
-                  icon={DollarSign}
-                  growth={salesGrowth}
-                  suffix=" جنيه"
-                />
-                <StatCard
-                  title="عدد الفواتير"
-                  value={totalInvoices}
-                  icon={FileText}
-                  growth={invoicesGrowth}
-                />
-                <StatCard
-                  title="عدد العملاء"
-                  value={totalCustomers}
-                  icon={Users}
-                />
-                <StatCard
-                  title="عدد المنتجات"
-                  value={totalProducts}
-                  icon={Package}
-                />
+          {/* Charts Row 1 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Sales Trend */}
+            <Card>
+              <CardHeader>
+                <CardTitle>مبيعات الفترة</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salesData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value: number) => [`${value.toLocaleString()} جنيه`, "المبيعات"]}
+                      />
+                      <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Invoice Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>حالة الفواتير</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={invoiceStatusData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {invoiceStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Monthly Comparison */}
+          <Card>
+            <CardHeader>
+              <CardTitle>مقارنة المبيعات والفواتير الشهرية</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={monthlySalesData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value: number) => `${value.toLocaleString()} جنيه`}
+                    />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="sales"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      name="المبيعات"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="invoices"
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      name="الفواتير"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Charts Row 1 */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Sales Trend */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>مبيعات الفترة</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={salesData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip 
-                            formatter={(value: number) => [`${value.toLocaleString()} جنيه`, "المبيعات"]}
-                          />
-                          <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Invoice Status */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>حالة الفواتير</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={invoiceStatusData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                            outerRadius={100}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {invoiceStatusData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Monthly Comparison */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>مقارنة المبيعات والفواتير الشهرية</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={monthlySalesData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip 
-                          formatter={(value: number) => `${value.toLocaleString()} جنيه`}
-                        />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="sales"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={2}
-                          name="المبيعات"
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="invoices"
-                          stroke="#22c55e"
-                          strokeWidth={2}
-                          name="الفواتير"
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+          {/* Top Products & Customers */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Top Products */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  أفضل المنتجات مبيعاً
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {topProducts.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    لا توجد بيانات
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {topProducts.map((product, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                            {index + 1}
+                          </span>
+                          <div>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {product.quantity} وحدة
+                            </p>
+                          </div>
+                        </div>
+                        <p className="font-bold">{product.revenue.toLocaleString()} جنيه</p>
+                      </div>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </CardContent>
+            </Card>
 
-              {/* Top Products & Customers */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Top Products */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ShoppingCart className="w-5 h-5" />
-                      أفضل المنتجات مبيعاً
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {topProducts.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">
-                        لا توجد بيانات
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {topProducts.map((product, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                                {index + 1}
-                              </span>
-                              <div>
-                                <p className="font-medium">{product.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {product.quantity} وحدة
-                                </p>
-                              </div>
-                            </div>
-                            <p className="font-bold">{product.revenue.toLocaleString()} جنيه</p>
-                          </div>
-                        ))}
+            {/* Top Customers */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  أفضل العملاء
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {topCustomers.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    لا توجد بيانات
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {topCustomers.map((customer, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                            {index + 1}
+                          </span>
+                          <p className="font-medium">{customer.name}</p>
+                        </div>
+                        <p className="font-bold">{customer.total.toLocaleString()} جنيه</p>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Top Customers */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      أفضل العملاء
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {topCustomers.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">
-                        لا توجد بيانات
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {topCustomers.map((customer, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                                {index + 1}
-                              </span>
-                              <p className="font-medium">{customer.name}</p>
-                            </div>
-                            <p className="font-bold">{customer.total.toLocaleString()} جنيه</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+    </DashboardLayout>
+  );
   );
 };
 
