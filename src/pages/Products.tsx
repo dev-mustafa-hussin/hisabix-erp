@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Search, Package, Loader2, BarChart } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Package,
+  Loader2,
+  BarChart,
+} from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -261,273 +269,355 @@ const Products = () => {
       return <Badge variant="destructive">نفذ</Badge>;
     }
     if (quantity <= minQuantity) {
-      return <Badge variant="secondary" className="bg-warning text-warning-foreground">منخفض</Badge>;
+      return (
+        <Badge
+          variant="secondary"
+          className="bg-warning text-warning-foreground"
+        >
+          منخفض
+        </Badge>
+      );
     }
-    return <Badge variant="default" className="bg-green-500">متوفر</Badge>;
+    return (
+      <Badge variant="default" className="bg-green-500">
+        متوفر
+      </Badge>
+    );
   };
 
   return (
     <DashboardLayout>
-      {/* Header */}
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog()} className="gap-2">
-                <Plus className="w-4 h-4" />
-                إضافة منتج
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg" dir="rtl">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingProduct ? "تعديل المنتج" : "إضافة منتج جديد"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>اسم المنتج (إنجليزي) *</Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Product Name"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>اسم المنتج (عربي)</Label>
-                    <Input
-                      value={formData.name_ar}
-                      onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
-                      placeholder="اسم المنتج"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>رمز المنتج (SKU)</Label>
-                    <Input
-                      value={formData.sku}
-                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                      placeholder="SKU-001"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>الباركود</Label>
-                    <Input
-                      value={formData.barcode}
-                      onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                      placeholder="123456789"
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>سعر التكلفة</Label>
-                    <Input
-                      type="number"
-                      value={formData.cost_price}
-                      onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>سعر البيع</Label>
-                    <Input
-                      type="number"
-                      value={formData.selling_price}
-                      onChange={(e) => setFormData({ ...formData, selling_price: e.target.value })}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>الكمية</Label>
-                    <Input
-                      type="number"
-                      value={formData.quantity}
-                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>الحد الأدنى</Label>
-                    <Input
-                      type="number"
-                      value={formData.min_quantity}
-                      onChange={(e) => setFormData({ ...formData, min_quantity: e.target.value })}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>الوحدة</Label>
-                    <Input
-                      value={formData.unit}
-                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                      placeholder="قطعة"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>الوصف</Label>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="بحث عن منتج..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10"
+            />
+          </div>
+          <h1 className="text-xl font-bold text-card-foreground hidden sm:flex items-center gap-2">
+            <Package className="w-6 h-6 text-primary" />
+            إدارة المنتجات
+          </h1>
+        </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              onClick={() => handleOpenDialog()}
+              className="gap-2 w-full sm:w-auto order-first sm:order-last"
+            >
+              <Plus className="w-4 h-4" />
+              إضافة منتج
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg" dir="rtl">
+            <DialogHeader className="text-right">
+              <DialogTitle>
+                {editingProduct ? "تعديل المنتج" : "إضافة منتج جديد"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 text-right">
+                  <Label>اسم المنتج (إنجليزي) *</Label>
                   <Input
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="وصف المنتج"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    placeholder="Product Name"
+                    dir="ltr"
+                    className="text-left"
                   />
                 </div>
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" disabled={saving} className="flex-1">
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : editingProduct ? (
-                      "تحديث"
-                    ) : (
-                      "إضافة"
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    إلغاء
-                  </Button>
+                <div className="space-y-2 text-right">
+                  <Label>اسم المنتج (عربي)</Label>
+                  <Input
+                    value={formData.name_ar}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name_ar: e.target.value })
+                    }
+                    placeholder="اسم المنتج"
+                    className="text-right"
+                  />
                 </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 text-right">
+                  <Label>رمز المنتج (SKU)</Label>
+                  <Input
+                    value={formData.sku}
+                    onChange={(e) =>
+                      setFormData({ ...formData, sku: e.target.value })
+                    }
+                    placeholder="SKU-001"
+                    dir="ltr"
+                    className="text-left"
+                  />
+                </div>
+                <div className="space-y-2 text-right">
+                  <Label>الباركود</Label>
+                  <Input
+                    value={formData.barcode}
+                    onChange={(e) =>
+                      setFormData({ ...formData, barcode: e.target.value })
+                    }
+                    placeholder="123456789"
+                    dir="ltr"
+                    className="text-left"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 text-right">
+                  <Label>سعر التكلفة</Label>
+                  <Input
+                    type="number"
+                    value={formData.cost_price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cost_price: e.target.value })
+                    }
+                    placeholder="0"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2 text-right">
+                  <Label>سعر البيع</Label>
+                  <Input
+                    type="number"
+                    value={formData.selling_price}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        selling_price: e.target.value,
+                      })
+                    }
+                    placeholder="0"
+                    className="text-right"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="space-y-2 text-right">
+                  <Label>الكمية</Label>
+                  <Input
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) =>
+                      setFormData({ ...formData, quantity: e.target.value })
+                    }
+                    placeholder="0"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2 text-right">
+                  <Label>الحد الأدنى</Label>
+                  <Input
+                    type="number"
+                    value={formData.min_quantity}
+                    onChange={(e) =>
+                      setFormData({ ...formData, min_quantity: e.target.value })
+                    }
+                    placeholder="0"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2 text-right col-span-2 sm:col-span-1">
+                  <Label>الوحدة</Label>
+                  <Input
+                    value={formData.unit}
+                    onChange={(e) =>
+                      setFormData({ ...formData, unit: e.target.value })
+                    }
+                    placeholder="قطعة"
+                    className="text-right"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 text-right">
+                <Label>الوصف</Label>
+                <Input
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder="وصف المنتج"
+                  className="text-right"
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" disabled={saving} className="flex-1">
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : editingProduct ? (
+                    "تحديث"
+                  ) : (
+                    "إضافة"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  إلغاء
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="بحث عن منتج..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10 w-64"
-              />
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <div className="flex items-center justify-between">
+            <Package className="w-8 h-8 text-primary" />
+            <div className="text-left">
+              <p className="text-2xl font-bold text-card-foreground">
+                {products.length}
+              </p>
+              <p className="text-sm text-muted-foreground">إجمالي المنتجات</p>
             </div>
-            <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
-              <Package className="w-6 h-6 text-primary" />
-              إدارة المنتجات
-            </h1>
           </div>
         </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-card rounded-xl p-4 border border-border">
-            <div className="flex items-center justify-between">
-              <Package className="w-8 h-8 text-primary" />
-              <div className="text-left">
-                <p className="text-2xl font-bold text-card-foreground">{products.length}</p>
-                <p className="text-sm text-muted-foreground">إجمالي المنتجات</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl p-4 border border-border">
-            <div className="flex items-center justify-between">
-              <BarChart className="w-8 h-8 text-green-500" />
-              <div className="text-left">
-                <p className="text-2xl font-bold text-card-foreground">
-                  {products.filter((p) => p.quantity > p.min_quantity).length}
-                </p>
-                <p className="text-sm text-muted-foreground">متوفر</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl p-4 border border-border">
-            <div className="flex items-center justify-between">
-              <BarChart className="w-8 h-8 text-warning" />
-              <div className="text-left">
-                <p className="text-2xl font-bold text-card-foreground">
-                  {products.filter((p) => p.quantity > 0 && p.quantity <= p.min_quantity).length}
-                </p>
-                <p className="text-sm text-muted-foreground">مخزون منخفض</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl p-4 border border-border">
-            <div className="flex items-center justify-between">
-              <BarChart className="w-8 h-8 text-destructive" />
-              <div className="text-left">
-                <p className="text-2xl font-bold text-card-foreground">
-                  {products.filter((p) => p.quantity === 0).length}
-                </p>
-                <p className="text-sm text-muted-foreground">نفذ المخزون</p>
-              </div>
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <div className="flex items-center justify-between">
+            <BarChart className="w-8 h-8 text-green-500" />
+            <div className="text-left">
+              <p className="text-2xl font-bold text-card-foreground">
+                {products.filter((p) => p.quantity > p.min_quantity).length}
+              </p>
+              <p className="text-sm text-muted-foreground">متوفر</p>
             </div>
           </div>
         </div>
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <div className="flex items-center justify-between">
+            <BarChart className="w-8 h-8 text-warning" />
+            <div className="text-left">
+              <p className="text-2xl font-bold text-card-foreground">
+                {
+                  products.filter(
+                    (p) => p.quantity > 0 && p.quantity <= p.min_quantity
+                  ).length
+                }
+              </p>
+              <p className="text-sm text-muted-foreground">مخزون منخفض</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-card rounded-xl p-4 border border-border">
+          <div className="flex items-center justify-between">
+            <BarChart className="w-8 h-8 text-destructive" />
+            <div className="text-left">
+              <p className="text-2xl font-bold text-card-foreground">
+                {products.filter((p) => p.quantity === 0).length}
+              </p>
+              <p className="text-sm text-muted-foreground">نفذ المخزون</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* Table */}
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Package className="w-12 h-12 mb-4" />
-              <p>لا يوجد منتجات</p>
-            </div>
-          ) : (
+      {/* Table */}
+      <div className="bg-card rounded-xl border border-border overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Package className="w-12 h-12 mb-4" />
+            <p>لا يوجد منتجات</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">الإجراءات</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
-                  <TableHead className="text-right">الكمية</TableHead>
-                  <TableHead className="text-right">سعر البيع</TableHead>
-                  <TableHead className="text-right">سعر التكلفة</TableHead>
-                  <TableHead className="text-right">SKU</TableHead>
+                  <TableHead className="text-right">#</TableHead>
                   <TableHead className="text-right">اسم المنتج</TableHead>
-                  <TableHead className="text-right w-12">#</TableHead>
+                  <TableHead className="text-right">SKU</TableHead>
+                  <TableHead className="text-right">سعر التكلفة</TableHead>
+                  <TableHead className="text-right">سعر البيع</TableHead>
+                  <TableHead className="text-right">الكمية</TableHead>
+                  <TableHead className="text-right">الحالة</TableHead>
+                  <TableHead className="text-center">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts.map((product, index) => (
                   <TableRow key={product.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell className="font-medium">
+                      {product.name_ar || product.name}
+                    </TableCell>
+                    <TableCell dir="ltr" className="text-right">
+                      {product.sku || "-"}
+                    </TableCell>
+                    <TableCell>{product.cost_price} ج.م</TableCell>
+                    <TableCell>{product.selling_price} ج.م</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      {product.quantity} {product.unit}
+                    </TableCell>
+                    <TableCell>
+                      {getStockStatus(product.quantity, product.min_quantity)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleOpenDialog(product)}
+                          className="hover:text-primary"
                         >
-                          <Pencil className="w-4 h-4 text-primary" />
+                          <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => setDeleteProduct(product)}
+                          className="hover:text-destructive"
                         >
-                          <Trash2 className="w-4 h-4 text-destructive" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </TableCell>
-                    <TableCell>{getStockStatus(product.quantity, product.min_quantity)}</TableCell>
-                    <TableCell>{product.quantity} {product.unit}</TableCell>
-                    <TableCell>{product.selling_price} ج.م</TableCell>
-                    <TableCell>{product.cost_price} ج.م</TableCell>
-                    <TableCell dir="ltr" className="text-right">{product.sku || "-"}</TableCell>
-                    <TableCell className="font-medium">
-                      {product.name_ar || product.name}
-                    </TableCell>
-                    <TableCell>{index + 1}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          )}
-        </div>
-      </main>
+          </div>
+        )}
+      </div>
 
+      <AlertDialog
+        open={!!deleteProduct}
+        onOpenChange={() => setDeleteProduct(null)}
+      >
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader className="text-right">
+            <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف المنتج "{deleteProduct?.name_ar || deleteProduct?.name}"
+              نهائياً. هذا الإجراء لا يمكن التراجع عنه.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:justify-start">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              حذف
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </DashboardLayout>
   );
