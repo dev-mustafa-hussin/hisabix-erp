@@ -414,18 +414,23 @@ const UserManagement = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Users className="w-7 h-7 text-primary" />
-              إدارة المستخدمين
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              إدارة أعضاء الفريق وصلاحياتهم في {company?.name}
-            </p>
-          </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <Users className="w-7 h-7 text-primary" />
+                إدارة المستخدمين
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                إدارة أعضاء الفريق وصلاحياتهم في {company?.name}
+              </p>
+            </div>
 
             {(isOwner || isAdmin) && (
               <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -813,6 +818,8 @@ const UserManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+          </div>
+        </DialogContent>
     </DashboardLayout>
   );
 };

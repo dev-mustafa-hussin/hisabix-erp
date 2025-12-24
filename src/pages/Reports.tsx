@@ -80,10 +80,14 @@ const Reports = () => {
 
   // Chart data
   const [salesData, setSalesData] = useState<SalesData[]>([]);
-  const [invoiceStatusData, setInvoiceStatusData] = useState<InvoiceStatusData[]>([]);
+  const [invoiceStatusData, setInvoiceStatusData] = useState<
+    InvoiceStatusData[]
+  >([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
-  const [monthlySalesData, setMonthlySalesData] = useState<{ month: string; sales: number; invoices: number }[]>([]);
+  const [monthlySalesData, setMonthlySalesData] = useState<
+    { month: string; sales: number; invoices: number }[]
+  >([]);
 
   useEffect(() => {
     fetchCompanyId();
@@ -142,7 +146,8 @@ const Reports = () => {
       .eq("company_id", companyId)
       .gte("sale_date", startDate);
 
-    const currentSalesTotal = currentSales?.reduce((sum, s) => sum + (s.total || 0), 0) || 0;
+    const currentSalesTotal =
+      currentSales?.reduce((sum, s) => sum + (s.total || 0), 0) || 0;
     setTotalSales(currentSalesTotal);
 
     // Previous period sales for growth calculation
@@ -153,10 +158,12 @@ const Reports = () => {
       .gte("sale_date", previousStartDate)
       .lt("sale_date", previousEndDate);
 
-    const previousSalesTotal = previousSales?.reduce((sum, s) => sum + (s.total || 0), 0) || 0;
-    const growth = previousSalesTotal > 0 
-      ? ((currentSalesTotal - previousSalesTotal) / previousSalesTotal) * 100 
-      : 0;
+    const previousSalesTotal =
+      previousSales?.reduce((sum, s) => sum + (s.total || 0), 0) || 0;
+    const growth =
+      previousSalesTotal > 0
+        ? ((currentSalesTotal - previousSalesTotal) / previousSalesTotal) * 100
+        : 0;
     setSalesGrowth(Math.round(growth));
 
     // Current period invoices
@@ -176,9 +183,12 @@ const Reports = () => {
       .gte("created_at", previousStartDate)
       .lt("created_at", previousEndDate);
 
-    const invGrowth = (previousInvoiceCount || 0) > 0 
-      ? (((invoiceCount || 0) - (previousInvoiceCount || 0)) / (previousInvoiceCount || 1)) * 100 
-      : 0;
+    const invGrowth =
+      (previousInvoiceCount || 0) > 0
+        ? (((invoiceCount || 0) - (previousInvoiceCount || 0)) /
+            (previousInvoiceCount || 1)) *
+          100
+        : 0;
     setInvoicesGrowth(Math.round(invGrowth));
 
     // Total customers
@@ -276,16 +286,20 @@ const Reports = () => {
     // Get invoice items with product info
     const { data: invoiceItems } = await supabase
       .from("invoice_items")
-      .select(`
+      .select(
+        `
         quantity,
         total,
         product:products(name, company_id)
-      `)
+      `
+      )
       .gte("created_at", startDate);
 
     // Filter by company and group by product
-    const productStats: { [key: string]: { quantity: number; revenue: number } } = {};
-    
+    const productStats: {
+      [key: string]: { quantity: number; revenue: number };
+    } = {};
+
     invoiceItems?.forEach((item: any) => {
       if (item.product && item.product.company_id === companyId) {
         const name = item.product.name;
@@ -317,10 +331,12 @@ const Reports = () => {
 
     const { data } = await supabase
       .from("invoices")
-      .select(`
+      .select(
+        `
         total,
         customer:customers(name)
-      `)
+      `
+      )
       .eq("company_id", companyId)
       .gte("created_at", startDate)
       .not("customer_id", "is", null);
@@ -360,7 +376,8 @@ const Reports = () => {
         .gte("sale_date", start)
         .lte("sale_date", end);
 
-      const salesTotal = salesData?.reduce((sum, s) => sum + (s.total || 0), 0) || 0;
+      const salesTotal =
+        salesData?.reduce((sum, s) => sum + (s.total || 0), 0) || 0;
 
       // Get invoices for this month
       const { data: invoicesData } = await supabase
@@ -370,7 +387,8 @@ const Reports = () => {
         .gte("created_at", start)
         .lte("created_at", end);
 
-      const invoicesTotal = invoicesData?.reduce((sum, i) => sum + (i.total || 0), 0) || 0;
+      const invoicesTotal =
+        invoicesData?.reduce((sum, i) => sum + (i.total || 0), 0) || 0;
 
       months.push({
         month: monthName,
@@ -447,8 +465,16 @@ const Reports = () => {
               {suffix}
             </p>
             {growth !== undefined && (
-              <div className={`flex items-center gap-1 mt-2 text-sm ${growth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {growth >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              <div
+                className={`flex items-center gap-1 mt-2 text-sm ${
+                  growth >= 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {growth >= 0 ? (
+                  <TrendingUp className="w-4 h-4" />
+                ) : (
+                  <TrendingDown className="w-4 h-4" />
+                )}
                 <span>{Math.abs(growth)}%</span>
                 <span className="text-muted-foreground">عن الفترة السابقة</span>
               </div>
@@ -507,11 +533,7 @@ const Reports = () => {
               icon={FileText}
               growth={invoicesGrowth}
             />
-            <StatCard
-              title="عدد العملاء"
-              value={totalCustomers}
-              icon={Users}
-            />
+            <StatCard title="عدد العملاء" value={totalCustomers} icon={Users} />
             <StatCard
               title="عدد المنتجات"
               value={totalProducts}
@@ -533,10 +555,17 @@ const Reports = () => {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip 
-                        formatter={(value: number) => [`${value.toLocaleString()} جنيه`, "المبيعات"]}
+                      <Tooltip
+                        formatter={(value: number) => [
+                          `${value.toLocaleString()} جنيه`,
+                          "المبيعات",
+                        ]}
                       />
-                      <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar
+                        dataKey="total"
+                        fill="hsl(var(--primary))"
+                        radius={[4, 4, 0, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -557,7 +586,9 @@ const Reports = () => {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        label={({ name, percent }) =>
+                          `${name} (${(percent * 100).toFixed(0)}%)`
+                        }
                         outerRadius={100}
                         fill="#8884d8"
                         dataKey="value"
@@ -586,8 +617,10 @@ const Reports = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip 
-                      formatter={(value: number) => `${value.toLocaleString()} جنيه`}
+                    <Tooltip
+                      formatter={(value: number) =>
+                        `${value.toLocaleString()} جنيه`
+                      }
                     />
                     <Legend />
                     <Line
@@ -643,7 +676,9 @@ const Reports = () => {
                             </p>
                           </div>
                         </div>
-                        <p className="font-bold">{product.revenue.toLocaleString()} جنيه</p>
+                        <p className="font-bold">
+                          {product.revenue.toLocaleString()} جنيه
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -677,7 +712,9 @@ const Reports = () => {
                           </span>
                           <p className="font-medium">{customer.name}</p>
                         </div>
-                        <p className="font-bold">{customer.total.toLocaleString()} جنيه</p>
+                        <p className="font-bold">
+                          {customer.total.toLocaleString()} جنيه
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -688,7 +725,6 @@ const Reports = () => {
         </div>
       )}
     </DashboardLayout>
-  );
   );
 };
 

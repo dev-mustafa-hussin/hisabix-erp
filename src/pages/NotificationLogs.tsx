@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -236,37 +235,25 @@ const NotificationLogs = () => {
     invoiceReminders: logs.filter((l) => l.notification_type === "invoice_reminder").length,
   };
 
-  if (loading && logs.length === 0) {
-    return (
-      <div className="min-h-screen bg-muted/30">
-        <Sidebar />
-        <Header />
-        <main className="mr-64 pt-14 p-6">
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Sidebar />
-      <Header />
-
-      <main className="mr-64 pt-14 p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Button onClick={fetchLogs} variant="outline" className="gap-2">
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            تحديث
-          </Button>
-          <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
-            <History className="w-6 h-6 text-primary" />
-            سجل الإشعارات
-          </h1>
+    <DashboardLayout>
+      {loading && logs.length === 0 ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <Button onClick={fetchLogs} variant="outline" className="gap-2">
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              تحديث
+            </Button>
+            <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
+              <History className="w-6 h-6 text-primary" />
+              سجل الإشعارات
+            </h1>
+          </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-5 gap-4">
@@ -558,9 +545,11 @@ const NotificationLogs = () => {
             )}
           </CardContent>
         </Card>
-      </main>
-    </div>
+        </div>
+      )}
+    </DashboardLayout>
   );
 };
 
 export default NotificationLogs;
+```
