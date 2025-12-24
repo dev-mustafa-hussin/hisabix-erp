@@ -1,13 +1,23 @@
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, MapPin, Loader2 } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Users,
+  Phone,
+  Mail,
+  MapPin,
+  Loader2,
+} from "lucide-react";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+// ... (rest of imports)
 import {
   Dialog,
   DialogContent,
@@ -33,6 +43,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+// ... (Customer interface and component start remains same until return)
 
 interface Customer {
   id: string;
@@ -123,7 +135,7 @@ const Customers = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "خطأ",
@@ -266,7 +278,9 @@ const Customers = () => {
                   <Label>اسم العميل *</Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     placeholder="اسم العميل"
                   />
                 </div>
@@ -276,7 +290,9 @@ const Customers = () => {
                     <Input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
                       placeholder="email@example.com"
                       dir="ltr"
                     />
@@ -285,7 +301,9 @@ const Customers = () => {
                     <Label>رقم الهاتف</Label>
                     <Input
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
                       placeholder="01xxxxxxxxx"
                     />
                   </div>
@@ -295,7 +313,9 @@ const Customers = () => {
                     <Label>المدينة</Label>
                     <Input
                       value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, city: e.target.value })
+                      }
                       placeholder="المدينة"
                     />
                   </div>
@@ -304,7 +324,12 @@ const Customers = () => {
                     <Input
                       type="number"
                       value={formData.credit_limit}
-                      onChange={(e) => setFormData({ ...formData, credit_limit: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          credit_limit: e.target.value,
+                        })
+                      }
                       placeholder="0"
                     />
                   </div>
@@ -313,7 +338,9 @@ const Customers = () => {
                   <Label>العنوان</Label>
                   <Input
                     value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
                     placeholder="العنوان التفصيلي"
                   />
                 </div>
@@ -321,7 +348,9 @@ const Customers = () => {
                   <Label>ملاحظات</Label>
                   <Input
                     value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
+                    }
                     placeholder="ملاحظات إضافية"
                   />
                 </div>
@@ -383,7 +412,9 @@ const Customers = () => {
                   <TableHead className="text-right">الرصيد</TableHead>
                   <TableHead className="text-right">المدينة</TableHead>
                   <TableHead className="text-right">الهاتف</TableHead>
-                  <TableHead className="text-right">البريد الإلكتروني</TableHead>
+                  <TableHead className="text-right">
+                    البريد الإلكتروني
+                  </TableHead>
                   <TableHead className="text-right">اسم العميل</TableHead>
                   <TableHead className="text-right w-12">#</TableHead>
                 </TableRow>
@@ -411,9 +442,15 @@ const Customers = () => {
                     </TableCell>
                     <TableCell>{customer.balance} ج.م</TableCell>
                     <TableCell>{customer.city || "-"}</TableCell>
-                    <TableCell dir="ltr" className="text-right">{customer.phone || "-"}</TableCell>
-                    <TableCell dir="ltr" className="text-right">{customer.email || "-"}</TableCell>
-                    <TableCell className="font-medium">{customer.name}</TableCell>
+                    <TableCell dir="ltr" className="text-right">
+                      {customer.phone || "-"}
+                    </TableCell>
+                    <TableCell dir="ltr" className="text-right">
+                      {customer.email || "-"}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {customer.name}
+                    </TableCell>
                     <TableCell>{index + 1}</TableCell>
                   </TableRow>
                 ))}
@@ -424,17 +461,24 @@ const Customers = () => {
       </main>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteCustomer} onOpenChange={() => setDeleteCustomer(null)}>
+      <AlertDialog
+        open={!!deleteCustomer}
+        onOpenChange={() => setDeleteCustomer(null)}
+      >
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
             <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
             <AlertDialogDescription>
-              سيتم حذف العميل "{deleteCustomer?.name}" نهائياً. هذا الإجراء لا يمكن التراجع عنه.
+              سيتم حذف العميل "{deleteCustomer?.name}" نهائياً. هذا الإجراء لا
+              يمكن التراجع عنه.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               حذف
             </AlertDialogAction>
           </AlertDialogFooter>
