@@ -1,12 +1,10 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { SidebarProvider } from "@/contexts/SidebarContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Temporarily commenting out all pages to find the breaking one
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -17,6 +15,7 @@ import Sales from "./pages/Sales";
 import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
 import Receivables from "./pages/Receivables";
+/*
 import CompanySettings from "./pages/CompanySettings";
 import NotificationSettings from "./pages/NotificationSettings";
 import NotificationLogs from "./pages/NotificationLogs";
@@ -28,167 +27,30 @@ import AcceptInvitation from "./pages/AcceptInvitation";
 import ProfileSettings from "./pages/ProfileSettings";
 import OnlineStoreSettings from "./pages/OnlineStoreSettings";
 import NotFound from "./pages/NotFound";
+*/
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  console.log("App: Rendering started");
+  console.log("App: Rendering started (Minimal Version)");
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <SidebarProvider>
           <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route
-                    path="/accept-invitation"
-                    element={<AcceptInvitation />}
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/customers"
-                    element={
-                      <ProtectedRoute>
-                        <Customers />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/products"
-                    element={
-                      <ProtectedRoute>
-                        <Products />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/inventory"
-                    element={
-                      <ProtectedRoute>
-                        <Inventory />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/sales"
-                    element={
-                      <ProtectedRoute>
-                        <Sales />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/invoices"
-                    element={
-                      <ProtectedRoute>
-                        <Invoices />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/reports"
-                    element={
-                      <ProtectedRoute>
-                        <Reports />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/receivables"
-                    element={
-                      <ProtectedRoute>
-                        <Receivables />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/company-settings"
-                    element={
-                      <ProtectedRoute>
-                        <CompanySettings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/notification-settings"
-                    element={
-                      <ProtectedRoute>
-                        <NotificationSettings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/notification-logs"
-                    element={
-                      <ProtectedRoute>
-                        <NotificationLogs />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/inventory-report"
-                    element={
-                      <ProtectedRoute>
-                        <InventoryReport />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/notifications-dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <NotificationsDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/user-management"
-                    element={
-                      <ProtectedRoute>
-                        <UserManagement />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/audit-logs"
-                    element={
-                      <ProtectedRoute>
-                        <AuditLogs />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile-settings"
-                    element={
-                      <ProtectedRoute>
-                        <ProfileSettings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/online-store-settings"
-                    element={
-                      <ProtectedRoute>
-                        <OnlineStoreSettings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Login />} />
+                <Route
+                  path="*"
+                  element={
+                    <div className="p-20 text-center">
+                      App is working - Path: {window.location.pathname}
+                    </div>
+                  }
+                />
+              </Routes>
+            </BrowserRouter>
           </AuthProvider>
         </SidebarProvider>
       </ThemeProvider>
