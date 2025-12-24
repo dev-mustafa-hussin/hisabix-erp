@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Search, Package, Loader2, BarChart } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -268,11 +267,8 @@ const Products = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Sidebar />
-      <Header />
-
-      <main className="mr-64 pt-14 p-6 space-y-6">
+    <DashboardLayout>
+      {/* Header */}
         {/* Header */}
         <div className="flex items-center justify-between">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

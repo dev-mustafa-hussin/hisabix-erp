@@ -253,212 +253,219 @@ const Customers = () => {
   );
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Sidebar />
-      <Header />
-
-      <main className="mr-64 pt-14 p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog()} className="gap-2">
-                <Plus className="w-4 h-4" />
-                إضافة عميل
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md" dir="rtl">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingCustomer ? "تعديل العميل" : "إضافة عميل جديد"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>اسم العميل *</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    placeholder="اسم العميل"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>البريد الإلكتروني</Label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({ ...formData, email: e.target.value })
-                      }
-                      placeholder="email@example.com"
-                      dir="ltr"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>رقم الهاتف</Label>
-                    <Input
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
-                      }
-                      placeholder="01xxxxxxxxx"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>المدينة</Label>
-                    <Input
-                      value={formData.city}
-                      onChange={(e) =>
-                        setFormData({ ...formData, city: e.target.value })
-                      }
-                      placeholder="المدينة"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>حد الائتمان</Label>
-                    <Input
-                      type="number"
-                      value={formData.credit_limit}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          credit_limit: e.target.value,
-                        })
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>العنوان</Label>
-                  <Input
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                    placeholder="العنوان التفصيلي"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>ملاحظات</Label>
-                  <Input
-                    value={formData.notes}
-                    onChange={(e) =>
-                      setFormData({ ...formData, notes: e.target.value })
-                    }
-                    placeholder="ملاحظات إضافية"
-                  />
-                </div>
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" disabled={saving} className="flex-1">
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : editingCustomer ? (
-                      "تحديث"
-                    ) : (
-                      "إضافة"
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    إلغاء
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="بحث عن عميل..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10 w-64"
-              />
-            </div>
-            <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
-              <Users className="w-6 h-6 text-primary" />
-              إدارة العملاء
-            </h1>
+    <DashboardLayout>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="بحث عن عميل..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10"
+            />
           </div>
+          <h1 className="text-xl font-bold text-card-foreground hidden sm:flex items-center gap-2">
+            <Users className="w-6 h-6 text-primary" />
+            إدارة العملاء
+          </h1>
         </div>
 
-        {/* Table */}
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : filteredCustomers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Users className="w-12 h-12 mb-4" />
-              <p>لا يوجد عملاء</p>
-            </div>
-          ) : (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              onClick={() => handleOpenDialog()}
+              className="gap-2 w-full sm:w-auto order-first sm:order-last"
+            >
+              <Plus className="w-4 h-4" />
+              إضافة عميل
+            </Button>
+          </DialogTrigger>
+          {/* ... DialogContent remains mostly same, just ensuring direction: rtl ... */}
+          <DialogContent className="max-w-md" dir="rtl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingCustomer ? "تعديل العميل" : "إضافة عميل جديد"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2 text-right">
+                <Label>اسم العميل *</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder="اسم العميل"
+                  className="text-right"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 text-right">
+                  <Label>البريد الإلكتروني</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    placeholder="email@example.com"
+                    dir="ltr"
+                    className="text-left"
+                  />
+                </div>
+                <div className="space-y-2 text-right">
+                  <Label>رقم الهاتف</Label>
+                  <Input
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    placeholder="01xxxxxxxxx"
+                    className="text-right"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 text-right">
+                  <Label>المدينة</Label>
+                  <Input
+                    value={formData.city}
+                    onChange={(e) =>
+                      setFormData({ ...formData, city: e.target.value })
+                    }
+                    placeholder="المدينة"
+                    className="text-right"
+                  />
+                </div>
+                <div className="space-y-2 text-right">
+                  <Label>حد الائتمان</Label>
+                  <Input
+                    type="number"
+                    value={formData.credit_limit}
+                    onChange={(e) =>
+                      setFormData({ ...formData, credit_limit: e.target.value })
+                    }
+                    placeholder="0"
+                    className="text-right"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 text-right">
+                <Label>العنوان</Label>
+                <Input
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
+                  placeholder="العنوان التفصيلي"
+                  className="text-right"
+                />
+              </div>
+              <div className="space-y-2 text-right">
+                <Label>ملاحظات</Label>
+                <Input
+                  value={formData.notes}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
+                  placeholder="ملاحظات إضافية"
+                  className="text-right"
+                />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" disabled={saving} className="flex-1">
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : editingCustomer ? (
+                    "تحديث"
+                  ) : (
+                    "إضافة"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  إلغاء
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Table */}
+      <div className="bg-card rounded-xl border border-border overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : filteredCustomers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Users className="w-12 h-12 mb-4" />
+            <p>لا يوجد عملاء</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">الإجراءات</TableHead>
-                  <TableHead className="text-right">الرصيد</TableHead>
-                  <TableHead className="text-right">المدينة</TableHead>
+                  <TableHead className="text-right">#</TableHead>
+                  <TableHead className="text-right">اسم العميل</TableHead>
                   <TableHead className="text-right">الهاتف</TableHead>
                   <TableHead className="text-right">
                     البريد الإلكتروني
                   </TableHead>
-                  <TableHead className="text-right">اسم العميل</TableHead>
-                  <TableHead className="text-right w-12">#</TableHead>
+                  <TableHead className="text-right">المدينة</TableHead>
+                  <TableHead className="text-right">الرصيد</TableHead>
+                  <TableHead className="text-center">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCustomers.map((customer, index) => (
                   <TableRow key={customer.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenDialog(customer)}
-                        >
-                          <Pencil className="w-4 h-4 text-primary" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeleteCustomer(customer)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell className="font-medium">
+                      {customer.name}
                     </TableCell>
-                    <TableCell>{customer.balance} ج.م</TableCell>
-                    <TableCell>{customer.city || "-"}</TableCell>
                     <TableCell dir="ltr" className="text-right">
                       {customer.phone || "-"}
                     </TableCell>
                     <TableCell dir="ltr" className="text-right">
                       {customer.email || "-"}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {customer.name}
+                    <TableCell>{customer.city || "-"}</TableCell>
+                    <TableCell>{customer.balance} ج.م</TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(customer)}
+                          className="hover:text-primary"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteCustomer(customer)}
+                          className="hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
-                    <TableCell>{index + 1}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          )}
-        </div>
-      </main>
+          </div>
+        )}
+      </div>
 
       {/* Delete Confirmation */}
       <AlertDialog
@@ -466,14 +473,14 @@ const Customers = () => {
         onOpenChange={() => setDeleteCustomer(null)}
       >
         <AlertDialogContent dir="rtl">
-          <AlertDialogHeader>
+          <AlertDialogHeader className="text-right">
             <AlertDialogTitle>هل أنت متأكد من الحذف؟</AlertDialogTitle>
             <AlertDialogDescription>
               سيتم حذف العميل "{deleteCustomer?.name}" نهائياً. هذا الإجراء لا
               يمكن التراجع عنه.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
+          <AlertDialogFooter className="gap-2 sm:justify-start">
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
@@ -484,7 +491,7 @@ const Customers = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </DashboardLayout>
   );
 };
 
