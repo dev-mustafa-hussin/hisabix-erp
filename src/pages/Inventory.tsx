@@ -26,12 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -129,7 +124,9 @@ interface AlertSchedule {
 const Inventory = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
-  const [stockMovements, setStockMovements] = useState<StockMovementRecord[]>([]);
+  const [stockMovements, setStockMovements] = useState<StockMovementRecord[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [loadingMovements, setLoadingMovements] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -145,20 +142,32 @@ const Inventory = () => {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("inventory");
   const [sendingAlert, setSendingAlert] = useState(false);
-  const [editingMinQuantity, setEditingMinQuantity] = useState<string | null>(null);
+  const [editingMinQuantity, setEditingMinQuantity] = useState<string | null>(
+    null
+  );
   const [newMinQuantity, setNewMinQuantity] = useState<number>(0);
-  const [companyData, setCompanyData] = useState<{ name: string; email: string | null } | null>(null);
+  const [companyData, setCompanyData] = useState<{
+    name: string;
+    email: string | null;
+  } | null>(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Movement filters
-  const [movementDateFrom, setMovementDateFrom] = useState<Date | undefined>(undefined);
-  const [movementDateTo, setMovementDateTo] = useState<Date | undefined>(undefined);
-  const [movementProductFilter, setMovementProductFilter] = useState<string>("all");
+  const [movementDateFrom, setMovementDateFrom] = useState<Date | undefined>(
+    undefined
+  );
+  const [movementDateTo, setMovementDateTo] = useState<Date | undefined>(
+    undefined
+  );
+  const [movementProductFilter, setMovementProductFilter] =
+    useState<string>("all");
   const [movementTypeFilter, setMovementTypeFilter] = useState<string>("all");
-  
+
   // Alert schedule
-  const [alertSchedule, setAlertSchedule] = useState<AlertSchedule | null>(null);
+  const [alertSchedule, setAlertSchedule] = useState<AlertSchedule | null>(
+    null
+  );
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({
     schedule_type: "disabled" as "daily" | "weekly" | "disabled",
@@ -180,14 +189,14 @@ const Inventory = () => {
 
       if (data) {
         setCompanyId(data.company_id);
-        
+
         // Fetch company details
         const { data: company } = await supabase
           .from("companies")
           .select("name, email")
           .eq("id", data.company_id)
           .maybeSingle();
-        
+
         if (company) {
           setCompanyData(company);
         }
@@ -264,7 +273,12 @@ const Inventory = () => {
   };
 
   const handleStockMovement = async () => {
-    if (!selectedProduct || stockMovement.quantity <= 0 || !user?.id || !companyId) {
+    if (
+      !selectedProduct ||
+      stockMovement.quantity <= 0 ||
+      !user?.id ||
+      !companyId
+    ) {
       toast.error("يرجى إدخال كمية صحيحة");
       return;
     }
@@ -353,13 +367,16 @@ const Inventory = () => {
     setSendingAlert(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("send-stock-alert", {
-        body: {
-          company_id: companyId,
-          recipient_email: companyData.email,
-          company_name: companyData.name,
-        },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "send-stock-alert",
+        {
+          body: {
+            company_id: companyId,
+            recipient_email: companyData.email,
+            company_name: companyData.name,
+          },
+        }
+      );
 
       if (error) throw error;
 
@@ -408,7 +425,10 @@ const Inventory = () => {
           .from("stock_alert_schedules")
           .update({
             schedule_type: scheduleForm.schedule_type,
-            weekly_day: scheduleForm.schedule_type === "weekly" ? scheduleForm.weekly_day : null,
+            weekly_day:
+              scheduleForm.schedule_type === "weekly"
+                ? scheduleForm.weekly_day
+                : null,
             daily_hour: scheduleForm.daily_hour,
             is_active: scheduleForm.schedule_type !== "disabled",
           })
@@ -416,15 +436,16 @@ const Inventory = () => {
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("stock_alert_schedules")
-          .insert({
-            company_id: companyId,
-            schedule_type: scheduleForm.schedule_type,
-            weekly_day: scheduleForm.schedule_type === "weekly" ? scheduleForm.weekly_day : null,
-            daily_hour: scheduleForm.daily_hour,
-            is_active: scheduleForm.schedule_type !== "disabled",
-          });
+        const { error } = await supabase.from("stock_alert_schedules").insert({
+          company_id: companyId,
+          schedule_type: scheduleForm.schedule_type,
+          weekly_day:
+            scheduleForm.schedule_type === "weekly"
+              ? scheduleForm.weekly_day
+              : null,
+          daily_hour: scheduleForm.daily_hour,
+          is_active: scheduleForm.schedule_type !== "disabled",
+        });
 
         if (error) throw error;
       }
@@ -476,21 +497,37 @@ const Inventory = () => {
 
       const productsToInsert = jsonData.map((row: any) => ({
         company_id: companyId,
-        name: row["اسم المنتج"] || row["name"] || row["Name"] || row["المنتج"] || "",
+        name:
+          row["اسم المنتج"] ||
+          row["name"] ||
+          row["Name"] ||
+          row["المنتج"] ||
+          "",
         name_ar: row["الاسم بالعربي"] || row["name_ar"] || null,
         sku: row["SKU"] || row["sku"] || row["رمز المنتج"] || null,
         barcode: row["الباركود"] || row["barcode"] || row["Barcode"] || null,
-        cost_price: parseFloat(row["سعر التكلفة"] || row["cost_price"] || row["Cost Price"] || 0),
-        selling_price: parseFloat(row["سعر البيع"] || row["selling_price"] || row["Selling Price"] || 0),
-        quantity: parseInt(row["الكمية"] || row["quantity"] || row["Quantity"] || 0),
-        min_quantity: parseInt(row["الحد الأدنى"] || row["min_quantity"] || row["Min Quantity"] || 0),
+        cost_price: parseFloat(
+          row["سعر التكلفة"] || row["cost_price"] || row["Cost Price"] || 0
+        ),
+        selling_price: parseFloat(
+          row["سعر البيع"] || row["selling_price"] || row["Selling Price"] || 0
+        ),
+        quantity: parseInt(
+          row["الكمية"] || row["quantity"] || row["Quantity"] || 0
+        ),
+        min_quantity: parseInt(
+          row["الحد الأدنى"] || row["min_quantity"] || row["Min Quantity"] || 0
+        ),
         unit: row["الوحدة"] || row["unit"] || row["Unit"] || "piece",
-        description: row["الوصف"] || row["description"] || row["Description"] || null,
+        description:
+          row["الوصف"] || row["description"] || row["Description"] || null,
         is_active: true,
       }));
 
       // Filter out products without a name
-      const validProducts = productsToInsert.filter((p) => p.name && p.name.trim() !== "");
+      const validProducts = productsToInsert.filter(
+        (p) => p.name && p.name.trim() !== ""
+      );
 
       if (validProducts.length === 0) {
         toast.error("لا توجد منتجات صالحة للاستيراد");
@@ -524,13 +561,13 @@ const Inventory = () => {
         "اسم المنتج": "منتج مثال",
         "الاسم بالعربي": "منتج مثال",
         "رمز المنتج": "SKU001",
-        "الباركود": "1234567890123",
+        الباركود: "1234567890123",
         "سعر التكلفة": 100,
         "سعر البيع": 150,
-        "الكمية": 50,
+        الكمية: 50,
         "الحد الأدنى": 10,
-        "الوحدة": "piece",
-        "الوصف": "وصف المنتج",
+        الوحدة: "piece",
+        الوصف: "وصف المنتج",
       },
     ];
 
@@ -550,20 +587,25 @@ const Inventory = () => {
       "اسم المنتج": product.name,
       "الاسم بالعربي": product.name_ar || "",
       "رمز المنتج": product.sku || "",
-      "التصنيف": product.category?.name || "",
+      التصنيف: product.category?.name || "",
       "سعر التكلفة": product.cost_price,
       "سعر البيع": product.selling_price,
-      "الكمية": product.quantity,
+      الكمية: product.quantity,
       "الحد الأدنى": product.min_quantity,
       "قيمة المخزون": product.quantity * product.cost_price,
-      "الحالة": product.quantity === 0 ? "نفذ" : product.quantity <= product.min_quantity ? "منخفض" : "متوفر",
-      "نشط": product.is_active ? "نعم" : "لا",
+      الحالة:
+        product.quantity === 0
+          ? "نفذ"
+          : product.quantity <= product.min_quantity
+          ? "منخفض"
+          : "متوفر",
+      نشط: product.is_active ? "نعم" : "لا",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "المخزون");
-    
+
     const date = new Date().toLocaleDateString("ar-EG").replace(/\//g, "-");
     XLSX.writeFile(workbook, `تقرير_المخزون_${date}.xlsx`);
     toast.success("تم تصدير المخزون بنجاح");
@@ -576,19 +618,21 @@ const Inventory = () => {
     }
 
     const exportData = movementsToExport.map((movement) => ({
-      "التاريخ": format(new Date(movement.created_at), "dd/MM/yyyy HH:mm", { locale: ar }),
-      "المنتج": movement.product?.name_ar || movement.product?.name || "-",
+      التاريخ: format(new Date(movement.created_at), "dd/MM/yyyy HH:mm", {
+        locale: ar,
+      }),
+      المنتج: movement.product?.name_ar || movement.product?.name || "-",
       "نوع الحركة": movement.movement_type === "in" ? "إضافة" : "سحب",
-      "الكمية": movement.quantity,
+      الكمية: movement.quantity,
       "الكمية قبل": movement.quantity_before,
       "الكمية بعد": movement.quantity_after,
-      "ملاحظات": movement.notes || "",
+      ملاحظات: movement.notes || "",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "حركات المخزون");
-    
+
     const date = new Date().toLocaleDateString("ar-EG").replace(/\//g, "-");
     XLSX.writeFile(workbook, `سجل_حركات_المخزون_${date}.xlsx`);
     toast.success("تم تصدير سجل الحركات بنجاح");
@@ -625,12 +669,18 @@ const Inventory = () => {
     }
 
     // Product filter
-    if (movementProductFilter !== "all" && movement.product_id !== movementProductFilter) {
+    if (
+      movementProductFilter !== "all" &&
+      movement.product_id !== movementProductFilter
+    ) {
       return false;
     }
 
     // Type filter
-    if (movementTypeFilter !== "all" && movement.movement_type !== movementTypeFilter) {
+    if (
+      movementTypeFilter !== "all" &&
+      movement.movement_type !== movementTypeFilter
+    ) {
       return false;
     }
 
@@ -644,7 +694,11 @@ const Inventory = () => {
     setMovementTypeFilter("all");
   };
 
-  const hasActiveFilters = movementDateFrom || movementDateTo || movementProductFilter !== "all" || movementTypeFilter !== "all";
+  const hasActiveFilters =
+    movementDateFrom ||
+    movementDateTo ||
+    movementProductFilter !== "all" ||
+    movementTypeFilter !== "all";
 
   const getStockStatus = (product: Product) => {
     if (product.quantity === 0) {
@@ -657,14 +711,20 @@ const Inventory = () => {
     }
     if (product.quantity <= product.min_quantity) {
       return (
-        <Badge variant="secondary" className="gap-1 bg-amber-500/20 text-amber-600">
+        <Badge
+          variant="secondary"
+          className="gap-1 bg-amber-500/20 text-amber-600"
+        >
           <TrendingDown className="w-3 h-3" />
           منخفض
         </Badge>
       );
     }
     return (
-      <Badge variant="secondary" className="gap-1 bg-emerald-500/20 text-emerald-600">
+      <Badge
+        variant="secondary"
+        className="gap-1 bg-emerald-500/20 text-emerald-600"
+      >
         <TrendingUp className="w-3 h-3" />
         متوفر
       </Badge>
@@ -674,536 +734,567 @@ const Inventory = () => {
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="relative w-72">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="بحث في المخزون..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10"
-              />
-            </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
+        <div className="flex items-center gap-3">
+          <div className="relative w-72">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="بحث في المخزون..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pr-10"
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={importing}
-              className="gap-2"
-            >
-              {importing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Upload className="w-4 h-4" />
-              )}
-              استيراد Excel
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={downloadTemplate}
-              className="gap-2 text-muted-foreground"
-            >
-              <Download className="w-4 h-4" />
-              تحميل القالب
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportToExcel}
-              className="gap-2"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              تصدير Excel
-            </Button>
           </div>
-          <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
-            <Package className="w-6 h-6 text-primary" />
-            إدارة المخزون
-          </h1>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="gap-2"
+          >
+            {importing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4" />
+            )}
+            استيراد Excel
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={downloadTemplate}
+            className="gap-2 text-muted-foreground"
+          >
+            <Download className="w-4 h-4" />
+            تحميل القالب
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportToExcel}
+            className="gap-2"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            تصدير Excel
+          </Button>
         </div>
+        <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
+          <Package className="w-6 h-6 text-primary" />
+          إدارة المخزون
+        </h1>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">إجمالي المنتجات</p>
-                  <p className="text-2xl font-bold">{totalProducts}</p>
-                </div>
-                <Box className="w-10 h-10 text-primary" />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">إجمالي المنتجات</p>
+                <p className="text-2xl font-bold">{totalProducts}</p>
               </div>
-            </CardContent>
-          </Card>
+              <Box className="w-10 h-10 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">قيمة المخزون</p>
-                  <p className="text-2xl font-bold">
-                    {totalInventoryValue.toLocaleString()} EGP
-                  </p>
-                </div>
-                <TrendingUp className="w-10 h-10 text-emerald-500" />
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">قيمة المخزون</p>
+                <p className="text-2xl font-bold">
+                  {totalInventoryValue.toLocaleString()} EGP
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <TrendingUp className="w-10 h-10 text-emerald-500" />
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="border-amber-500/50">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">مخزون منخفض</p>
-                  <p className="text-2xl font-bold text-amber-600">
-                    {lowStockProducts.length}
-                  </p>
-                </div>
-                <TrendingDown className="w-10 h-10 text-amber-500" />
+        <Card className="border-amber-500/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">مخزون منخفض</p>
+                <p className="text-2xl font-bold text-amber-600">
+                  {lowStockProducts.length}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <TrendingDown className="w-10 h-10 text-amber-500" />
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="border-destructive/50">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">نفذ من المخزون</p>
-                  <p className="text-2xl font-bold text-destructive">
-                    {outOfStockProducts.length}
-                  </p>
-                </div>
-                <AlertTriangle className="w-10 h-10 text-destructive" />
+        <Card className="border-destructive/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">نفذ من المخزون</p>
+                <p className="text-2xl font-bold text-destructive">
+                  {outOfStockProducts.length}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <AlertTriangle className="w-10 h-10 text-destructive" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Low Stock Alerts */}
-        {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && (
-          <Card className="border-amber-500/50 bg-amber-500/5">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSendStockAlert}
-                    disabled={sendingAlert}
-                    className="gap-2"
-                  >
-                    {sendingAlert ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Mail className="w-4 h-4" />
-                    )}
-                    إرسال تنبيه بالبريد
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsScheduleDialogOpen(true)}
-                    className="gap-2"
-                  >
-                    <Clock className="w-4 h-4" />
-                    جدولة التنبيهات
-                    {alertSchedule && alertSchedule.schedule_type !== "disabled" && (
+      {/* Low Stock Alerts */}
+      {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && (
+        <Card className="border-amber-500/50 bg-amber-500/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendStockAlert}
+                  disabled={sendingAlert}
+                  className="gap-2"
+                >
+                  {sendingAlert ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4" />
+                  )}
+                  إرسال تنبيه بالبريد
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsScheduleDialogOpen(true)}
+                  className="gap-2"
+                >
+                  <Clock className="w-4 h-4" />
+                  جدولة التنبيهات
+                  {alertSchedule &&
+                    alertSchedule.schedule_type !== "disabled" && (
                       <Badge variant="secondary" className="mr-1 text-xs">
-                        {alertSchedule.schedule_type === "daily" ? "يومي" : "أسبوعي"}
+                        {alertSchedule.schedule_type === "daily"
+                          ? "يومي"
+                          : "أسبوعي"}
                       </Badge>
                     )}
-                  </Button>
-                </div>
-                <CardTitle className="flex items-center gap-2 text-amber-600 text-right">
-                  <AlertTriangle className="w-5 h-5" />
-                  تنبيهات المخزون
-                </CardTitle>
+                </Button>
               </div>
+              <CardTitle className="flex items-center gap-2 text-amber-600 text-right">
+                <AlertTriangle className="w-5 h-5" />
+                تنبيهات المخزون
+              </CardTitle>
+            </div>
+            <CardDescription className="text-right">
+              المنتجات التي تحتاج إلى إعادة تعبئة
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {outOfStockProducts.map((product) => (
+                <Badge
+                  key={product.id}
+                  variant="destructive"
+                  className="cursor-pointer"
+                  onClick={() => openStockDialog(product, "in")}
+                >
+                  {product.name} (نفذ)
+                </Badge>
+              ))}
+              {lowStockProducts.map((product) => (
+                <Badge
+                  key={product.id}
+                  variant="secondary"
+                  className="bg-amber-500/20 text-amber-600 cursor-pointer"
+                  onClick={() => openStockDialog(product, "in")}
+                >
+                  {product.name} ({product.quantity} متبقي)
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tabs for Inventory and Movements */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md mr-auto">
+          <TabsTrigger value="movements" className="gap-2">
+            <History className="w-4 h-4" />
+            سجل الحركات
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="gap-2">
+            <Package className="w-4 h-4" />
+            جرد المخزون
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Inventory Tab */}
+        <TabsContent value="inventory" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right">جرد المخزون</CardTitle>
               <CardDescription className="text-right">
-                المنتجات التي تحتاج إلى إعادة تعبئة
+                قائمة بجميع المنتجات وكمياتها
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {outOfStockProducts.map((product) => (
-                  <Badge
-                    key={product.id}
-                    variant="destructive"
-                    className="cursor-pointer"
-                    onClick={() => openStockDialog(product, "in")}
-                  >
-                    {product.name} (نفذ)
-                  </Badge>
-                ))}
-                {lowStockProducts.map((product) => (
-                  <Badge
-                    key={product.id}
-                    variant="secondary"
-                    className="bg-amber-500/20 text-amber-600 cursor-pointer"
-                    onClick={() => openStockDialog(product, "in")}
-                  >
-                    {product.name} ({product.quantity} متبقي)
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Tabs for Inventory and Movements */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mr-auto">
-            <TabsTrigger value="movements" className="gap-2">
-              <History className="w-4 h-4" />
-              سجل الحركات
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="gap-2">
-              <Package className="w-4 h-4" />
-              جرد المخزون
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Inventory Tab */}
-          <TabsContent value="inventory" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right">جرد المخزون</CardTitle>
-                <CardDescription className="text-right">
-                  قائمة بجميع المنتجات وكمياتها
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : filteredProducts.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>لا توجد منتجات</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-right">المنتج</TableHead>
-                        <TableHead className="text-right">SKU</TableHead>
-                        <TableHead className="text-right">التصنيف</TableHead>
-                        <TableHead className="text-center">الكمية</TableHead>
-                        <TableHead className="text-center">الحد الأدنى</TableHead>
-                        <TableHead className="text-center">الحالة</TableHead>
-                        <TableHead className="text-right">سعر التكلفة</TableHead>
-                        <TableHead className="text-right">قيمة المخزون</TableHead>
-                        <TableHead className="text-center">الإجراءات</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProducts.map((product) => (
-                        <TableRow
-                          key={product.id}
-                          className={
-                            product.quantity === 0
-                              ? "bg-destructive/5"
-                              : product.quantity <= product.min_quantity
-                              ? "bg-amber-500/5"
-                              : ""
-                          }
-                        >
-                          <TableCell className="font-medium">
-                            {product.name_ar || product.name}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {product.sku || "-"}
-                          </TableCell>
-                          <TableCell>{product.category?.name || "-"}</TableCell>
-                          <TableCell className="text-center font-bold">
-                            {product.quantity}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {editingMinQuantity === product.id ? (
-                              <div className="flex items-center gap-1 justify-center">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  value={newMinQuantity}
-                                  onChange={(e) => setNewMinQuantity(parseInt(e.target.value) || 0)}
-                                  className="w-16 h-7 text-center text-sm"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-emerald-600"
-                                  onClick={() => handleUpdateMinQuantity(product.id)}
-                                >
-                                  <Save className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground"
-                                  onClick={() => setEditingMinQuantity(null)}
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => startEditingMinQuantity(product)}
-                                className="text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1 justify-center w-full"
-                                title="انقر للتعديل"
-                              >
-                                {product.min_quantity}
-                                <Edit className="w-3 h-3 opacity-0 group-hover:opacity-100" />
-                              </button>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {getStockStatus(product)}
-                          </TableCell>
-                          <TableCell>{product.cost_price.toFixed(2)} EGP</TableCell>
-                          <TableCell>
-                            {(product.quantity * product.cost_price).toFixed(2)} EGP
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-1">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>لا توجد منتجات</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">المنتج</TableHead>
+                      <TableHead className="text-right">SKU</TableHead>
+                      <TableHead className="text-right">التصنيف</TableHead>
+                      <TableHead className="text-center">الكمية</TableHead>
+                      <TableHead className="text-center">الحد الأدنى</TableHead>
+                      <TableHead className="text-center">الحالة</TableHead>
+                      <TableHead className="text-right">سعر التكلفة</TableHead>
+                      <TableHead className="text-right">قيمة المخزون</TableHead>
+                      <TableHead className="text-center">الإجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProducts.map((product) => (
+                      <TableRow
+                        key={product.id}
+                        className={
+                          product.quantity === 0
+                            ? "bg-destructive/5"
+                            : product.quantity <= product.min_quantity
+                            ? "bg-amber-500/5"
+                            : ""
+                        }
+                      >
+                        <TableCell className="font-medium">
+                          {product.name_ar || product.name}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {product.sku || "-"}
+                        </TableCell>
+                        <TableCell>{product.category?.name || "-"}</TableCell>
+                        <TableCell className="text-center font-bold">
+                          {product.quantity}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {editingMinQuantity === product.id ? (
+                            <div className="flex items-center gap-1 justify-center">
+                              <Input
+                                type="number"
+                                min="0"
+                                value={newMinQuantity}
+                                onChange={(e) =>
+                                  setNewMinQuantity(
+                                    parseInt(e.target.value) || 0
+                                  )
+                                }
+                                className="w-16 h-7 text-center text-sm"
+                              />
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => openStockDialog(product, "in")}
-                                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100"
-                                title="إضافة للمخزون"
+                                className="h-7 w-7 text-emerald-600"
+                                onClick={() =>
+                                  handleUpdateMinQuantity(product.id)
+                                }
                               >
-                                <ArrowUpCircle className="w-4 h-4" />
+                                <Save className="w-3 h-3" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => openStockDialog(product, "out")}
-                                className="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
-                                title="سحب من المخزون"
-                                disabled={product.quantity === 0}
+                                className="h-7 w-7 text-muted-foreground"
+                                onClick={() => setEditingMinQuantity(null)}
                               >
-                                <ArrowDownCircle className="w-4 h-4" />
+                                <X className="w-3 h-3" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Movements Tab */}
-          <TabsContent value="movements" className="mt-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportMovementsToExcel(filteredMovements)}
-                    className="gap-2"
-                    disabled={filteredMovements.length === 0}
-                  >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    تصدير Excel
-                  </Button>
-                  <CardTitle className="text-right flex items-center gap-2">
-                    <History className="w-5 h-5 text-primary" />
-                    سجل حركات المخزون
-                  </CardTitle>
-                </div>
-                <CardDescription className="text-right">
-                  جميع عمليات الإضافة والسحب من المخزون
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Filters */}
-                <div className="flex flex-wrap items-center gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">فلترة:</span>
-                  </div>
-
-                  {/* Date From */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "gap-2 w-[140px] justify-start",
-                          !movementDateFrom && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="w-4 h-4" />
-                        {movementDateFrom ? format(movementDateFrom, "dd/MM/yyyy") : "من تاريخ"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={movementDateFrom}
-                        onSelect={setMovementDateFrom}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Date To */}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "gap-2 w-[140px] justify-start",
-                          !movementDateTo && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="w-4 h-4" />
-                        {movementDateTo ? format(movementDateTo, "dd/MM/yyyy") : "إلى تاريخ"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={movementDateTo}
-                        onSelect={setMovementDateTo}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Product Filter */}
-                  <Select value={movementProductFilter} onValueChange={setMovementProductFilter}>
-                    <SelectTrigger className="w-[160px] h-9">
-                      <SelectValue placeholder="المنتج" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">جميع المنتجات</SelectItem>
-                      {products.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name_ar || product.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Type Filter */}
-                  <Select value={movementTypeFilter} onValueChange={setMovementTypeFilter}>
-                    <SelectTrigger className="w-[120px] h-9">
-                      <SelectValue placeholder="النوع" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">الكل</SelectItem>
-                      <SelectItem value="in">إضافة</SelectItem>
-                      <SelectItem value="out">سحب</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {/* Reset Filters */}
-                  {hasActiveFilters && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={resetMovementFilters}
-                      className="gap-1 text-muted-foreground"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                      إعادة تعيين
-                    </Button>
-                  )}
-
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="mr-auto">
-                      {filteredMovements.length} نتيجة
-                    </Badge>
-                  )}
-                </div>
-
-                {loadingMovements ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : filteredMovements.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>{hasActiveFilters ? "لا توجد نتائج مطابقة للفلتر" : "لا توجد حركات مسجلة"}</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-right">التاريخ</TableHead>
-                        <TableHead className="text-right">المنتج</TableHead>
-                        <TableHead className="text-center">النوع</TableHead>
-                        <TableHead className="text-center">الكمية</TableHead>
-                        <TableHead className="text-center">قبل</TableHead>
-                        <TableHead className="text-center">بعد</TableHead>
-                        <TableHead className="text-right">ملاحظات</TableHead>
+                          ) : (
+                            <button
+                              onClick={() => startEditingMinQuantity(product)}
+                              className="text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1 justify-center w-full"
+                              title="انقر للتعديل"
+                            >
+                              {product.min_quantity}
+                              <Edit className="w-3 h-3 opacity-0 group-hover:opacity-100" />
+                            </button>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getStockStatus(product)}
+                        </TableCell>
+                        <TableCell>
+                          {product.cost_price.toFixed(2)} EGP
+                        </TableCell>
+                        <TableCell>
+                          {(product.quantity * product.cost_price).toFixed(2)}{" "}
+                          EGP
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openStockDialog(product, "in")}
+                              className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100"
+                              title="إضافة للمخزون"
+                            >
+                              <ArrowUpCircle className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openStockDialog(product, "out")}
+                              className="text-amber-600 hover:text-amber-700 hover:bg-amber-100"
+                              title="سحب من المخزون"
+                              disabled={product.quantity === 0}
+                            >
+                              <ArrowDownCircle className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredMovements.map((movement) => (
-                        <TableRow key={movement.id}>
-                          <TableCell className="text-muted-foreground">
-                            {format(new Date(movement.created_at), "dd/MM/yyyy HH:mm", {
-                              locale: ar,
-                            })}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {movement.product?.name_ar || movement.product?.name || "-"}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {movement.movement_type === "in" ? (
-                              <Badge className="gap-1 bg-emerald-500/20 text-emerald-600 border-0">
-                                <ArrowUpCircle className="w-3 h-3" />
-                                إضافة
-                              </Badge>
-                            ) : (
-                              <Badge className="gap-1 bg-amber-500/20 text-amber-600 border-0">
-                                <ArrowDownCircle className="w-3 h-3" />
-                                سحب
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center font-bold">
-                            {movement.movement_type === "in" ? "+" : "-"}
-                            {movement.quantity}
-                          </TableCell>
-                          <TableCell className="text-center text-muted-foreground">
-                            {movement.quantity_before}
-                          </TableCell>
-                          <TableCell className="text-center font-bold">
-                            {movement.quantity_after}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                            {movement.notes || "-"}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Movements Tab */}
+        <TabsContent value="movements" className="mt-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportMovementsToExcel(filteredMovements)}
+                  className="gap-2"
+                  disabled={filteredMovements.length === 0}
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  تصدير Excel
+                </Button>
+                <CardTitle className="text-right flex items-center gap-2">
+                  <History className="w-5 h-5 text-primary" />
+                  سجل حركات المخزون
+                </CardTitle>
+              </div>
+              <CardDescription className="text-right">
+                جميع عمليات الإضافة والسحب من المخزون
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Filters */}
+              <div className="flex flex-wrap items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">فلترة:</span>
+                </div>
+
+                {/* Date From */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "gap-2 w-[140px] justify-start",
+                        !movementDateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="w-4 h-4" />
+                      {movementDateFrom
+                        ? format(movementDateFrom, "dd/MM/yyyy")
+                        : "من تاريخ"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={movementDateFrom}
+                      onSelect={setMovementDateFrom}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {/* Date To */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "gap-2 w-[140px] justify-start",
+                        !movementDateTo && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="w-4 h-4" />
+                      {movementDateTo
+                        ? format(movementDateTo, "dd/MM/yyyy")
+                        : "إلى تاريخ"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={movementDateTo}
+                      onSelect={setMovementDateTo}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {/* Product Filter */}
+                <Select
+                  value={movementProductFilter}
+                  onValueChange={setMovementProductFilter}
+                >
+                  <SelectTrigger className="w-[160px] h-9">
+                    <SelectValue placeholder="المنتج" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع المنتجات</SelectItem>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name_ar || product.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Type Filter */}
+                <Select
+                  value={movementTypeFilter}
+                  onValueChange={setMovementTypeFilter}
+                >
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue placeholder="النوع" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">الكل</SelectItem>
+                    <SelectItem value="in">إضافة</SelectItem>
+                    <SelectItem value="out">سحب</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Reset Filters */}
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetMovementFilters}
+                    className="gap-1 text-muted-foreground"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    إعادة تعيين
+                  </Button>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+
+                {hasActiveFilters && (
+                  <Badge variant="secondary" className="mr-auto">
+                    {filteredMovements.length} نتيجة
+                  </Badge>
+                )}
+              </div>
+
+              {loadingMovements ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : filteredMovements.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>
+                    {hasActiveFilters
+                      ? "لا توجد نتائج مطابقة للفلتر"
+                      : "لا توجد حركات مسجلة"}
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">التاريخ</TableHead>
+                      <TableHead className="text-right">المنتج</TableHead>
+                      <TableHead className="text-center">النوع</TableHead>
+                      <TableHead className="text-center">الكمية</TableHead>
+                      <TableHead className="text-center">قبل</TableHead>
+                      <TableHead className="text-center">بعد</TableHead>
+                      <TableHead className="text-right">ملاحظات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredMovements.map((movement) => (
+                      <TableRow key={movement.id}>
+                        <TableCell className="text-muted-foreground">
+                          {format(
+                            new Date(movement.created_at),
+                            "dd/MM/yyyy HH:mm",
+                            {
+                              locale: ar,
+                            }
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {movement.product?.name_ar ||
+                            movement.product?.name ||
+                            "-"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {movement.movement_type === "in" ? (
+                            <Badge className="gap-1 bg-emerald-500/20 text-emerald-600 border-0">
+                              <ArrowUpCircle className="w-3 h-3" />
+                              إضافة
+                            </Badge>
+                          ) : (
+                            <Badge className="gap-1 bg-amber-500/20 text-amber-600 border-0">
+                              <ArrowDownCircle className="w-3 h-3" />
+                              سحب
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center font-bold">
+                          {movement.movement_type === "in" ? "+" : "-"}
+                          {movement.quantity}
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">
+                          {movement.quantity_before}
+                        </TableCell>
+                        <TableCell className="text-center font-bold">
+                          {movement.quantity_after}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                          {movement.notes || "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Stock Movement Dialog */}
       <Dialog open={isStockDialogOpen} onOpenChange={setIsStockDialogOpen}>
@@ -1304,7 +1395,10 @@ const Inventory = () => {
       </Dialog>
 
       {/* Schedule Dialog */}
-      <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+      <Dialog
+        open={isScheduleDialogOpen}
+        onOpenChange={setIsScheduleDialogOpen}
+      >
         <DialogContent className="max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle className="text-right flex items-center gap-2">
@@ -1339,7 +1433,10 @@ const Inventory = () => {
                 <Select
                   value={scheduleForm.weekly_day.toString()}
                   onValueChange={(value) =>
-                    setScheduleForm({ ...scheduleForm, weekly_day: parseInt(value) })
+                    setScheduleForm({
+                      ...scheduleForm,
+                      weekly_day: parseInt(value),
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -1362,7 +1459,10 @@ const Inventory = () => {
                 <Select
                   value={scheduleForm.daily_hour.toString()}
                   onValueChange={(value) =>
-                    setScheduleForm({ ...scheduleForm, daily_hour: parseInt(value) })
+                    setScheduleForm({
+                      ...scheduleForm,
+                      daily_hour: parseInt(value),
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -1370,7 +1470,10 @@ const Inventory = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {hours.map((hour) => (
-                      <SelectItem key={hour.value} value={hour.value.toString()}>
+                      <SelectItem
+                        key={hour.value}
+                        value={hour.value.toString()}
+                      >
                         {hour.label}
                       </SelectItem>
                     ))}
@@ -1383,9 +1486,13 @@ const Inventory = () => {
               <div className="p-3 bg-muted rounded-lg">
                 <p className="text-sm text-muted-foreground">آخر إرسال:</p>
                 <p className="font-medium">
-                  {format(new Date(alertSchedule.last_sent_at), "dd/MM/yyyy HH:mm", {
-                    locale: ar,
-                  })}
+                  {format(
+                    new Date(alertSchedule.last_sent_at),
+                    "dd/MM/yyyy HH:mm",
+                    {
+                      locale: ar,
+                    }
+                  )}
                 </p>
               </div>
             )}

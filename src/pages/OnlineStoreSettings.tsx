@@ -1,7 +1,19 @@
 import { useState, useEffect, useRef } from "react";
-import { Store, Save, Loader2, Palette, Globe, MessageSquare, Facebook, Instagram, Video, Upload, X, Image as ImageIcon } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import {
+  Store,
+  Save,
+  Loader2,
+  Palette,
+  Globe,
+  MessageSquare,
+  Facebook,
+  Instagram,
+  Video,
+  Upload,
+  X,
+  Image as ImageIcon,
+} from "lucide-react";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +74,7 @@ const OnlineStoreSettings = () => {
     if (!user?.id) return;
 
     setLoading(true);
-    
+
     try {
       // Get user's company
       const { data: companyUsers, error: cuError } = await supabase
@@ -86,7 +98,8 @@ const OnlineStoreSettings = () => {
         .eq("company_id", companyId)
         .single();
 
-      if (error && error.code !== "PGRST116") { // PGRST116 is "No rows found"
+      if (error && error.code !== "PGRST116") {
+        // PGRST116 is "No rows found"
         throw error;
       }
 
@@ -124,14 +137,20 @@ const OnlineStoreSettings = () => {
     if (!file || !settings?.company_id) return;
 
     if (!file.type.startsWith("image/")) {
-      toast({ title: "خطأ", description: "يرجى اختيار ملف صورة", variant: "destructive" });
+      toast({
+        title: "خطأ",
+        description: "يرجى اختيار ملف صورة",
+        variant: "destructive",
+      });
       return;
     }
 
     setUploadingLogo(true);
     try {
       const fileExt = file.name.split(".").pop();
-      const fileName = `store-logo-${settings.company_id}-${Date.now()}.${fileExt}`;
+      const fileName = `store-logo-${
+        settings.company_id
+      }-${Date.now()}.${fileExt}`;
       const filePath = `store-logos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -140,16 +159,22 @@ const OnlineStoreSettings = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("company-logos").getPublicUrl(filePath);
+      const { data: urlData } = supabase.storage
+        .from("company-logos")
+        .getPublicUrl(filePath);
       const logoUrl = urlData.publicUrl;
 
       // Update locally, will be saved on form submit or we can update now
       setLogoPreview(logoUrl);
-      
+
       toast({ title: "تم الرفع", description: "تم رفع شعار المتجر بنجاح" });
     } catch (error) {
       console.error("Error uploading logo:", error);
-      toast({ title: "خطأ", description: "فشل في رفع الشعار", variant: "destructive" });
+      toast({
+        title: "خطأ",
+        description: "فشل في رفع الشعار",
+        variant: "destructive",
+      });
     } finally {
       setUploadingLogo(false);
     }
@@ -163,7 +188,11 @@ const OnlineStoreSettings = () => {
     e.preventDefault();
 
     if (!formData.slug.trim()) {
-      toast({ title: "خطأ", description: "يرجى إدخال رابط المتجر", variant: "destructive" });
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال رابط المتجر",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -173,7 +202,7 @@ const OnlineStoreSettings = () => {
     try {
       const payload = {
         company_id: settings.company_id,
-        slug: formData.slug.trim().toLowerCase().replace(/\s+/g, '-'),
+        slug: formData.slug.trim().toLowerCase().replace(/\s+/g, "-"),
         primary_color: formData.primary_color,
         secondary_color: formData.secondary_color,
         theme_mode: formData.theme_mode,
@@ -200,13 +229,19 @@ const OnlineStoreSettings = () => {
 
       if (error) throw error;
 
-      toast({ title: "تم الحفظ", description: "تم تحديث إعدادات المتجر بنجاح" });
+      toast({
+        title: "تم الحفظ",
+        description: "تم تحديث إعدادات المتجر بنجاح",
+      });
       fetchSettings();
     } catch (error: any) {
       console.error("Error saving store settings:", error);
       toast({
         title: "خطأ",
-        description: error.code === "23505" ? "رابط المتجر هذا مستخدم بالفعل" : "فشل في حفظ الإعدادات",
+        description:
+          error.code === "23505"
+            ? "رابط المتجر هذا مستخدم بالفعل"
+            : "فشل في حفظ الإعدادات",
         variant: "destructive",
       });
     } finally {
@@ -215,205 +250,271 @@ const OnlineStoreSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Sidebar />
-      <Header />
+    <DashboardLayout>
+      <div className="flex items-center justify-between">
+        <div />
+        <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
+          <Store className="w-6 h-6 text-primary" />
+          إعدادات المتجر الإلكتروني
+        </h1>
+      </div>
 
-      <main className="mr-64 pt-14 p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div />
-          <h1 className="text-xl font-bold text-card-foreground flex items-center gap-2">
-            <Store className="w-6 h-6 text-primary" />
-            إعدادات المتجر الإلكتروني
-          </h1>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right flex items-center gap-2">
+                <Globe className="w-5 h-5 text-primary" />
+                رابط المتجر
+              </CardTitle>
+              <CardDescription className="text-right">
+                حدد الرابط الفريد لمتجرك على الإنترنت
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 flex-row-reverse text-left">
+                <span className="text-muted-foreground font-mono">
+                  hisabix.com/store/
+                </span>
+                <Input
+                  value={formData.slug}
+                  onChange={(e) =>
+                    setFormData({ ...formData, slug: e.target.value })
+                  }
+                  placeholder="my-cool-store"
+                  className="max-w-xs font-mono"
+                  dir="ltr"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-primary" />
-                  رابط المتجر
-                </CardTitle>
-                <CardDescription className="text-right">
-                  حدد الرابط الفريد لمتجرك على الإنترنت
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 flex-row-reverse text-left">
-                  <span className="text-muted-foreground font-mono">hisabix.com/store/</span>
-                  <Input
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="my-cool-store"
-                    className="max-w-xs font-mono"
-                    dir="ltr"
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                هوية المتجر البصرية
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center gap-6 justify-start">
+                <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted/50 overflow-hidden">
+                  {logoPreview ? (
+                    <img
+                      src={logoPreview}
+                      alt="Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <Store className="w-12 h-12 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
                   />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5 text-primary" />
-                  هوية المتجر البصرية
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center gap-6 justify-start">
-                  <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted/50 overflow-hidden">
-                    {logoPreview ? (
-                      <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingLogo}
+                  >
+                    {uploadingLogo ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : (
-                      <Store className="w-12 h-12 text-muted-foreground" />
+                      <Upload className="w-4 h-4 mr-2" />
                     )}
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingLogo}>
-                      {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
-                      رفع شعار للمتجر
-                    </Button>
-                    {logoPreview && (
-                      <Button type="button" variant="ghost" className="text-destructive" onClick={() => setLogoPreview(null)}>
-                        حذف
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Palette className="w-4 h-4" /> اللون الأساسي
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={formData.primary_color}
-                        onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                        className="w-12 h-10 p-1"
-                      />
-                      <Input
-                        value={formData.primary_color}
-                        onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Palette className="w-4 h-4" /> اللون الثانوي
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={formData.secondary_color}
-                        onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                        className="w-12 h-10 p-1"
-                      />
-                      <Input
-                        value={formData.secondary_color}
-                        onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>نمط العرض</Label>
-                    <Select
-                      value={formData.theme_mode}
-                      onValueChange={(v: "light" | "dark") => setFormData({ ...formData, theme_mode: v })}
+                    رفع شعار للمتجر
+                  </Button>
+                  {logoPreview && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-destructive"
+                      onClick={() => setLogoPreview(null)}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">وضع فاتح (Light)</SelectItem>
-                        <SelectItem value="dark">وضع مظلم (Dark)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      حذف
+                    </Button>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-right flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-primary" />
-                  روابط التواصل الاجتماعي
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <Label>رقم الواتساب</Label>
-                  <div className="relative">
+                  <Label className="flex items-center gap-2">
+                    <Palette className="w-4 h-4" /> اللون الأساسي
+                  </Label>
+                  <div className="flex gap-2">
                     <Input
-                      value={formData.whatsapp_number}
-                      onChange={(e) => setFormData({ ...formData, whatsapp_number: e.target.value })}
-                      placeholder="+201xxxxxxxxx"
-                      dir="ltr"
-                      className="pl-10"
+                      type="color"
+                      value={formData.primary_color}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          primary_color: e.target.value,
+                        })
+                      }
+                      className="w-12 h-10 p-1"
                     />
-                    <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#25D366]" />
+                    <Input
+                      value={formData.primary_color}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          primary_color: e.target.value,
+                        })
+                      }
+                      dir="ltr"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>رابط فيسبوك</Label>
-                  <div className="relative">
+                  <Label className="flex items-center gap-2">
+                    <Palette className="w-4 h-4" /> اللون الثانوي
+                  </Label>
+                  <div className="flex gap-2">
                     <Input
-                      value={formData.facebook_url}
-                      onChange={(e) => setFormData({ ...formData, facebook_url: e.target.value })}
-                      dir="ltr"
-                      className="pl-10"
+                      type="color"
+                      value={formData.secondary_color}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          secondary_color: e.target.value,
+                        })
+                      }
+                      className="w-12 h-10 p-1"
                     />
-                    <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1877F2]" />
+                    <Input
+                      value={formData.secondary_color}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          secondary_color: e.target.value,
+                        })
+                      }
+                      dir="ltr"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>رابط انستجرام</Label>
-                  <div className="relative">
-                    <Input
-                      value={formData.instagram_url}
-                      onChange={(e) => setFormData({ ...formData, instagram_url: e.target.value })}
-                      dir="ltr"
-                      className="pl-10"
-                    />
-                    <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#E4405F]" />
-                  </div>
+                  <Label>نمط العرض</Label>
+                  <Select
+                    value={formData.theme_mode}
+                    onValueChange={(v: "light" | "dark") =>
+                      setFormData({ ...formData, theme_mode: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">وضع فاتح (Light)</SelectItem>
+                      <SelectItem value="dark">وضع مظلم (Dark)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>رابط تيك توك</Label>
-                  <div className="relative">
-                    <Input
-                      value={formData.tiktok_url}
-                      onChange={(e) => setFormData({ ...formData, tiktok_url: e.target.value })}
-                      dir="ltr"
-                      className="pl-10"
-                    />
-                    <Video className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            <div className="flex justify-start">
-              <Button type="submit" disabled={saving} className="gap-2 px-8">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                حفظ إعدادات المتجر
-              </Button>
-            </div>
-          </form>
-        )}
-      </main>
-    </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                روابط التواصل الاجتماعي
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>رقم الواتساب</Label>
+                <div className="relative">
+                  <Input
+                    value={formData.whatsapp_number}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        whatsapp_number: e.target.value,
+                      })
+                    }
+                    placeholder="+201xxxxxxxxx"
+                    dir="ltr"
+                    className="pl-10"
+                  />
+                  <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#25D366]" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>رابط فيسبوك</Label>
+                <div className="relative">
+                  <Input
+                    value={formData.facebook_url}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        facebook_url: e.target.value,
+                      })
+                    }
+                    dir="ltr"
+                    className="pl-10"
+                  />
+                  <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1877F2]" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>رابط انستجرام</Label>
+                <div className="relative">
+                  <Input
+                    value={formData.instagram_url}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        instagram_url: e.target.value,
+                      })
+                    }
+                    dir="ltr"
+                    className="pl-10"
+                  />
+                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#E4405F]" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>رابط تيك توك</Label>
+                <div className="relative">
+                  <Input
+                    value={formData.tiktok_url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, tiktok_url: e.target.value })
+                    }
+                    dir="ltr"
+                    className="pl-10"
+                  />
+                  <Video className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-start">
+            <Button type="submit" disabled={saving} className="gap-2 px-8">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              حفظ إعدادات المتجر
+            </Button>
+          </div>
+        </form>
+      )}
+    </DashboardLayout>
   );
 };
 

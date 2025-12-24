@@ -131,10 +131,12 @@ const Sales = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("sales")
-      .select(`
+      .select(
+        `
         *,
         customer:customers(name)
-      `)
+      `
+      )
       .eq("company_id", companyId)
       .order("sale_date", { ascending: false });
 
@@ -203,7 +205,9 @@ const Sales = () => {
       return;
     }
 
-    const existingItem = saleItems.find((item) => item.product_id === selectedProductId);
+    const existingItem = saleItems.find(
+      (item) => item.product_id === selectedProductId
+    );
     if (existingItem) {
       toast.error("هذا المنتج موجود بالفعل في القائمة");
       return;
@@ -253,7 +257,11 @@ const Sales = () => {
         discount_amount: discountAmount,
         tax_amount: taxAmount,
         total,
-        payment_method: paymentMethod as "cash" | "card" | "bank_transfer" | "check",
+        payment_method: paymentMethod as
+          | "cash"
+          | "card"
+          | "bank_transfer"
+          | "check",
         notes: notes || null,
         sale_date: new Date().toISOString(),
       })
@@ -316,312 +324,337 @@ const Sales = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <DashboardLayout>
-        <main className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Store className="w-8 h-8 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">المبيعات</h1>
-            </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => resetForm()}>
-                  <Plus className="w-4 h-4 ml-2" />
-                  عملية بيع جديدة
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>عملية بيع جديدة</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-6 py-4">
-                  {/* Customer Selection */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>العميل (اختياري)</Label>
-                      <Select value={customerId} onValueChange={setCustomerId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر العميل" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {customers.map((customer) => (
-                            <SelectItem key={customer.id} value={customer.id}>
-                              {customer.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>طريقة الدفع</Label>
-                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cash">نقداً</SelectItem>
-                          <SelectItem value="credit_card">بطاقة ائتمان</SelectItem>
-                          <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
-                          <SelectItem value="check">شيك</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+    <DashboardLayout>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Store className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">المبيعات</h1>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => resetForm()}>
+              <Plus className="w-4 h-4 ml-2" />
+              عملية بيع جديدة
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>عملية بيع جديدة</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              {/* Customer Selection */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>العميل (اختياري)</Label>
+                  <Select value={customerId} onValueChange={setCustomerId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر العميل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>طريقة الدفع</Label>
+                  <Select
+                    value={paymentMethod}
+                    onValueChange={setPaymentMethod}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">نقداً</SelectItem>
+                      <SelectItem value="credit_card">بطاقة ائتمان</SelectItem>
+                      <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
+                      <SelectItem value="check">شيك</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-                  {/* Add Product */}
-                  <div className="border rounded-lg p-4 space-y-4">
-                    <h3 className="font-semibold">إضافة منتج</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label>المنتج</Label>
-                        <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="اختر المنتج" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {products.map((product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.name} - {product.selling_price} جنيه (متوفر: {product.quantity})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>الكمية</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={itemQuantity}
-                          onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <Button type="button" onClick={addItem} className="w-full">
-                          <Plus className="w-4 h-4 ml-2" />
-                          إضافة
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Items Table */}
-                  {saleItems.length > 0 && (
-                    <div className="border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>المنتج</TableHead>
-                            <TableHead>الكمية</TableHead>
-                            <TableHead>سعر الوحدة</TableHead>
-                            <TableHead>الإجمالي</TableHead>
-                            <TableHead>إجراءات</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {saleItems.map((item) => (
-                            <TableRow key={item.product_id}>
-                              <TableCell>{item.product_name}</TableCell>
-                              <TableCell>{item.quantity}</TableCell>
-                              <TableCell>{item.unit_price} جنيه</TableCell>
-                              <TableCell>{item.total} جنيه</TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeItem(item.product_id)}
-                                >
-                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-
-                  {/* Totals */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>الخصم</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={discountAmount}
-                        onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>نسبة الضريبة (%)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={taxRate}
-                        onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                    <div className="flex justify-between">
-                      <span>المجموع الفرعي:</span>
-                      <span>{subtotal.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>الخصم:</span>
-                      <span>-{discountAmount.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>الضريبة ({taxRate}%):</span>
-                      <span>{taxAmount.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <span>الإجمالي:</span>
-                      <span>{total.toFixed(2)} جنيه</span>
-                    </div>
-                  </div>
-
+              {/* Add Product */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <h3 className="font-semibold">إضافة منتج</h3>
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>ملاحظات</Label>
-                    <Textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="ملاحظات إضافية..."
+                    <Label>المنتج</Label>
+                    <Select
+                      value={selectedProductId}
+                      onValueChange={setSelectedProductId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر المنتج" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} - {product.selling_price} جنيه
+                            (متوفر: {product.quantity})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>الكمية</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={itemQuantity}
+                      onChange={(e) =>
+                        setItemQuantity(parseInt(e.target.value) || 1)
+                      }
                     />
                   </div>
-
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      إلغاء
+                  <div className="flex items-end">
+                    <Button type="button" onClick={addItem} className="w-full">
+                      <Plus className="w-4 h-4 ml-2" />
+                      إضافة
                     </Button>
-                    <Button onClick={handleSubmit}>تسجيل عملية البيع</Button>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+              </div>
 
-          {/* Sales Table */}
-          <div className="bg-card rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>التاريخ</TableHead>
-                  <TableHead>العميل</TableHead>
-                  <TableHead>الإجمالي</TableHead>
-                  <TableHead>طريقة الدفع</TableHead>
-                  <TableHead>إجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      جاري التحميل...
-                    </TableCell>
-                  </TableRow>
-                ) : sales.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      لا توجد عمليات بيع
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sales.map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell>
-                        {format(new Date(sale.sale_date), "dd/MM/yyyy HH:mm", { locale: ar })}
-                      </TableCell>
-                      <TableCell>{sale.customer?.name || "عميل نقدي"}</TableCell>
-                      <TableCell>{sale.total?.toFixed(2)} جنيه</TableCell>
-                      <TableCell>{getPaymentMethodLabel(sale.payment_method)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedSale(sale);
-                              setIsViewDialogOpen(true);
-                            }}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(sale.id)}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* View Sale Dialog */}
-          <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>تفاصيل عملية البيع</DialogTitle>
-              </DialogHeader>
-              {selectedSale && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-muted-foreground">التاريخ</Label>
-                      <p>
-                        {format(new Date(selectedSale.sale_date), "dd/MM/yyyy HH:mm", {
-                          locale: ar,
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">العميل</Label>
-                      <p>{selectedSale.customer?.name || "عميل نقدي"}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">طريقة الدفع</Label>
-                      <p>{getPaymentMethodLabel(selectedSale.payment_method)}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">المجموع الفرعي</Label>
-                      <p>{selectedSale.subtotal?.toFixed(2)} جنيه</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">الخصم</Label>
-                      <p>{selectedSale.discount_amount?.toFixed(2)} جنيه</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">الضريبة</Label>
-                      <p>{selectedSale.tax_amount?.toFixed(2)} جنيه</p>
-                    </div>
-                  </div>
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between font-bold text-lg">
-                      <span>الإجمالي:</span>
-                      <span>{selectedSale.total?.toFixed(2)} جنيه</span>
-                    </div>
-                  </div>
-                  {selectedSale.notes && (
-                    <div>
-                      <Label className="text-muted-foreground">ملاحظات</Label>
-                      <p>{selectedSale.notes}</p>
-                    </div>
-                  )}
+              {/* Items Table */}
+              {saleItems.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>المنتج</TableHead>
+                        <TableHead>الكمية</TableHead>
+                        <TableHead>سعر الوحدة</TableHead>
+                        <TableHead>الإجمالي</TableHead>
+                        <TableHead>إجراءات</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {saleItems.map((item) => (
+                        <TableRow key={item.product_id}>
+                          <TableCell>{item.product_name}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.unit_price} جنيه</TableCell>
+                          <TableCell>{item.total} جنيه</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeItem(item.product_id)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
-            </DialogContent>
-          </Dialog>
-        </main>
+
+              {/* Totals */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>الخصم</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={discountAmount}
+                    onChange={(e) =>
+                      setDiscountAmount(parseFloat(e.target.value) || 0)
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>نسبة الضريبة (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={taxRate}
+                    onChange={(e) =>
+                      setTaxRate(parseFloat(e.target.value) || 0)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span>المجموع الفرعي:</span>
+                  <span>{subtotal.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>الخصم:</span>
+                  <span>-{discountAmount.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>الضريبة ({taxRate}%):</span>
+                  <span>{taxAmount.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                  <span>الإجمالي:</span>
+                  <span>{total.toFixed(2)} جنيه</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>ملاحظات</Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="ملاحظات إضافية..."
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  إلغاء
+                </Button>
+                <Button onClick={handleSubmit}>تسجيل عملية البيع</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      {/* Sales Table */}
+      <div className="bg-card rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>التاريخ</TableHead>
+              <TableHead>العميل</TableHead>
+              <TableHead>الإجمالي</TableHead>
+              <TableHead>طريقة الدفع</TableHead>
+              <TableHead>إجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  جاري التحميل...
+                </TableCell>
+              </TableRow>
+            ) : sales.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  لا توجد عمليات بيع
+                </TableCell>
+              </TableRow>
+            ) : (
+              sales.map((sale) => (
+                <TableRow key={sale.id}>
+                  <TableCell>
+                    {format(new Date(sale.sale_date), "dd/MM/yyyy HH:mm", {
+                      locale: ar,
+                    })}
+                  </TableCell>
+                  <TableCell>{sale.customer?.name || "عميل نقدي"}</TableCell>
+                  <TableCell>{sale.total?.toFixed(2)} جنيه</TableCell>
+                  <TableCell>
+                    {getPaymentMethodLabel(sale.payment_method)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setSelectedSale(sale);
+                          setIsViewDialogOpen(true);
+                        }}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(sale.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* View Sale Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تفاصيل عملية البيع</DialogTitle>
+          </DialogHeader>
+          {selectedSale && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">التاريخ</Label>
+                  <p>
+                    {format(
+                      new Date(selectedSale.sale_date),
+                      "dd/MM/yyyy HH:mm",
+                      {
+                        locale: ar,
+                      }
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">العميل</Label>
+                  <p>{selectedSale.customer?.name || "عميل نقدي"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">طريقة الدفع</Label>
+                  <p>{getPaymentMethodLabel(selectedSale.payment_method)}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">
+                    المجموع الفرعي
+                  </Label>
+                  <p>{selectedSale.subtotal?.toFixed(2)} جنيه</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">الخصم</Label>
+                  <p>{selectedSale.discount_amount?.toFixed(2)} جنيه</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">الضريبة</Label>
+                  <p>{selectedSale.tax_amount?.toFixed(2)} جنيه</p>
+                </div>
+              </div>
+              <div className="border-t pt-4">
+                <div className="flex justify-between font-bold text-lg">
+                  <span>الإجمالي:</span>
+                  <span>{selectedSale.total?.toFixed(2)} جنيه</span>
+                </div>
+              </div>
+              {selectedSale.notes && (
+                <div>
+                  <Label className="text-muted-foreground">ملاحظات</Label>
+                  <p>{selectedSale.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

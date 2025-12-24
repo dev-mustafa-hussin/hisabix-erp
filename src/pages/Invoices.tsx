@@ -30,7 +30,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Trash2, FileText, Eye, Printer, CreditCard, History, Download, Mail } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  FileText,
+  Eye,
+  Printer,
+  CreditCard,
+  History,
+  Download,
+  Mail,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { exportInvoiceToPDF } from "@/utils/pdfExport";
@@ -114,7 +124,9 @@ const Invoices = () => {
   // Form state
   const [invoiceNumber, setInvoiceNumber] = useState<string>("");
   const [customerId, setCustomerId] = useState<string>("");
-  const [invoiceDate, setInvoiceDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [invoiceDate, setInvoiceDate] = useState<string>(
+    format(new Date(), "yyyy-MM-dd")
+  );
   const [dueDate, setDueDate] = useState<string>("");
   const [discountRate, setDiscountRate] = useState<number>(0);
   const [taxRate, setTaxRate] = useState<number>(14);
@@ -164,10 +176,12 @@ const Invoices = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("invoices")
-      .select(`
+      .select(
+        `
         *,
         customer:customers(name)
-      `)
+      `
+      )
       .eq("company_id", companyId)
       .order("created_at", { ascending: false });
 
@@ -245,7 +259,9 @@ const Invoices = () => {
     const product = products.find((p) => p.id === selectedProductId);
     if (!product) return;
 
-    const existingItem = items.find((item) => item.product_id === selectedProductId);
+    const existingItem = items.find(
+      (item) => item.product_id === selectedProductId
+    );
     if (existingItem) {
       toast.error("هذا المنتج موجود بالفعل في القائمة");
       return;
@@ -364,7 +380,10 @@ const Invoices = () => {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: "draft" | "sent" | "paid" | "overdue" | "cancelled") => {
+  const handleStatusChange = async (
+    id: string,
+    newStatus: "draft" | "sent" | "paid" | "overdue" | "cancelled"
+  ) => {
     const { error } = await supabase
       .from("invoices")
       .update({ status: newStatus })
@@ -382,19 +401,23 @@ const Invoices = () => {
   const fetchInvoiceItems = async (invoiceId: string) => {
     const { data, error } = await supabase
       .from("invoice_items")
-      .select(`
+      .select(
+        `
         *,
         product:products(name)
-      `)
+      `
+      )
       .eq("invoice_id", invoiceId);
 
     if (error) {
       console.error("Error fetching invoice items:", error);
     } else {
-      setInvoiceItems(data?.map(item => ({
-        ...item,
-        product_name: item.product?.name || item.description,
-      })) || []);
+      setInvoiceItems(
+        data?.map((item) => ({
+          ...item,
+          product_name: item.product?.name || item.description,
+        })) || []
+      );
     }
   };
 
@@ -449,19 +472,21 @@ const Invoices = () => {
     }
 
     // Insert payment
-    const { error: paymentError } = await supabase
-      .from("payments")
-      .insert({
-        company_id: companyId,
-        user_id: user.id,
-        invoice_id: selectedInvoice.id,
-        customer_id: selectedInvoice.customer_id,
-        amount: paymentAmount,
-        payment_method: paymentMethod as "cash" | "card" | "bank_transfer" | "check",
-        reference_number: paymentReference || null,
-        notes: paymentNotes || null,
-        payment_date: new Date().toISOString(),
-      });
+    const { error: paymentError } = await supabase.from("payments").insert({
+      company_id: companyId,
+      user_id: user.id,
+      invoice_id: selectedInvoice.id,
+      customer_id: selectedInvoice.customer_id,
+      amount: paymentAmount,
+      payment_method: paymentMethod as
+        | "cash"
+        | "card"
+        | "bank_transfer"
+        | "check",
+      reference_number: paymentReference || null,
+      notes: paymentNotes || null,
+      payment_date: new Date().toISOString(),
+    });
 
     if (paymentError) {
       console.error("Error adding payment:", paymentError);
@@ -471,8 +496,14 @@ const Invoices = () => {
 
     // Update invoice paid_amount and status
     const newPaidAmount = selectedInvoice.paid_amount + paymentAmount;
-    let newStatus: "draft" | "sent" | "paid" | "overdue" | "cancelled" = selectedInvoice.status as "draft" | "sent" | "paid" | "overdue" | "cancelled";
-    
+    let newStatus: "draft" | "sent" | "paid" | "overdue" | "cancelled" =
+      selectedInvoice.status as
+        | "draft"
+        | "sent"
+        | "paid"
+        | "overdue"
+        | "cancelled";
+
     if (newPaidAmount >= selectedInvoice.total) {
       newStatus = "paid";
     }
@@ -528,7 +559,9 @@ const Invoices = () => {
     await exportInvoiceToPDF({
       invoice_number: invoice.invoice_number,
       invoice_date: format(new Date(invoice.invoice_date), "dd/MM/yyyy"),
-      due_date: invoice.due_date ? format(new Date(invoice.due_date), "dd/MM/yyyy") : null,
+      due_date: invoice.due_date
+        ? format(new Date(invoice.due_date), "dd/MM/yyyy")
+        : null,
       customer_name: invoice.customer?.name || "Cash Customer",
       company_name: company?.name || "EDOXO",
       company_logo: company?.logo_url || null,
@@ -560,9 +593,12 @@ const Invoices = () => {
     toast.loading("جاري إرسال التذكير...");
 
     try {
-      const { data, error } = await supabase.functions.invoke("send-invoice-reminder", {
-        body: { invoiceId: invoice.id },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "send-invoice-reminder",
+        {
+          body: { invoiceId: invoice.id },
+        }
+      );
 
       if (error) throw error;
 
@@ -605,604 +641,701 @@ const Invoices = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <DashboardLayout>
-        <main className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <FileText className="w-8 h-8 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">الفواتير</h1>
-            </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => resetForm()}>
-                  <Plus className="w-4 h-4 ml-2" />
-                  فاتورة جديدة
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>إنشاء فاتورة جديدة</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-6 py-4">
-                  {/* Invoice Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>رقم الفاتورة</Label>
-                      <Input value={invoiceNumber} readOnly className="bg-muted" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>العميل</Label>
-                      <Select value={customerId} onValueChange={setCustomerId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر العميل" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {customers.map((customer) => (
-                            <SelectItem key={customer.id} value={customer.id}>
-                              {customer.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>تاريخ الفاتورة</Label>
-                      <Input
-                        type="date"
-                        value={invoiceDate}
-                        onChange={(e) => setInvoiceDate(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>تاريخ الاستحقاق</Label>
-                      <Input
-                        type="date"
-                        value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Add Product */}
-                  <div className="border rounded-lg p-4 space-y-4">
-                    <h3 className="font-semibold">إضافة منتج</h3>
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label>المنتج</Label>
-                        <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="اختر المنتج" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {products.map((product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.name} - {product.selling_price} جنيه
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>الوصف</Label>
-                        <Input
-                          value={itemDescription}
-                          onChange={(e) => setItemDescription(e.target.value)}
-                          placeholder="وصف البند"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>الكمية</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={itemQuantity}
-                          onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <Button type="button" onClick={addItem} className="w-full">
-                          <Plus className="w-4 h-4 ml-2" />
-                          إضافة
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Items Table */}
-                  {items.length > 0 && (
-                    <div className="border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>المنتج</TableHead>
-                            <TableHead>الوصف</TableHead>
-                            <TableHead>الكمية</TableHead>
-                            <TableHead>سعر الوحدة</TableHead>
-                            <TableHead>الإجمالي</TableHead>
-                            <TableHead>إجراءات</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {items.map((item) => (
-                            <TableRow key={item.product_id}>
-                              <TableCell>{item.product_name}</TableCell>
-                              <TableCell>{item.description}</TableCell>
-                              <TableCell>{item.quantity}</TableCell>
-                              <TableCell>{item.unit_price} جنيه</TableCell>
-                              <TableCell>{item.total} جنيه</TableCell>
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeItem(item.product_id)}
-                                >
-                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-
-                  {/* Totals */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>نسبة الخصم (%)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={discountRate}
-                        onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>نسبة الضريبة (%)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={taxRate}
-                        onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                    <div className="flex justify-between">
-                      <span>المجموع الفرعي:</span>
-                      <span>{subtotal.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>الخصم ({discountRate}%):</span>
-                      <span>-{discountAmount.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>الضريبة ({taxRate}%):</span>
-                      <span>{taxAmount.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <span>الإجمالي:</span>
-                      <span>{total.toFixed(2)} جنيه</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>ملاحظات</Label>
-                    <Textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="ملاحظات إضافية..."
-                    />
-                  </div>
-
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      إلغاء
-                    </Button>
-                    <Button onClick={handleSubmit}>إنشاء الفاتورة</Button>
-                  </div>
+    <DashboardLayout>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <FileText className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">الفواتير</h1>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => resetForm()}>
+              <Plus className="w-4 h-4 ml-2" />
+              فاتورة جديدة
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>إنشاء فاتورة جديدة</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              {/* Invoice Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>رقم الفاتورة</Label>
+                  <Input value={invoiceNumber} readOnly className="bg-muted" />
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Invoices Table */}
-          <div className="bg-card rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>رقم الفاتورة</TableHead>
-                  <TableHead>التاريخ</TableHead>
-                  <TableHead>العميل</TableHead>
-                  <TableHead>الإجمالي</TableHead>
-                  <TableHead>المدفوع</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>إجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
-                      جاري التحميل...
-                    </TableCell>
-                  </TableRow>
-                ) : invoices.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      لا توجد فواتير
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                      <TableCell>
-                        {format(new Date(invoice.invoice_date), "dd/MM/yyyy", { locale: ar })}
-                      </TableCell>
-                      <TableCell>{invoice.customer?.name || "-"}</TableCell>
-                      <TableCell>{invoice.total?.toFixed(2)} جنيه</TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <span className="text-green-600">{invoice.paid_amount?.toFixed(2)}</span>
-                          <span className="text-muted-foreground"> / {invoice.total?.toFixed(2)}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={invoice.status}
-                          onValueChange={(value) => handleStatusChange(invoice.id, value as "draft" | "sent" | "paid" | "overdue" | "cancelled")}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue>{getStatusBadge(invoice.status)}</SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">مسودة</SelectItem>
-                            <SelectItem value="sent">مرسلة</SelectItem>
-                            <SelectItem value="paid">مدفوعة</SelectItem>
-                            <SelectItem value="overdue">متأخرة</SelectItem>
-                            <SelectItem value="cancelled">ملغاة</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => viewInvoice(invoice)}
-                            title="عرض"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleExportPDF(invoice)}
-                            title="تصدير PDF"
-                          >
-                            <Download className="w-4 h-4 text-primary" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openPaymentDialog(invoice)}
-                            title="تسجيل دفعة"
-                            disabled={invoice.status === "paid" || invoice.status === "cancelled"}
-                          >
-                            <CreditCard className="w-4 h-4 text-green-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openPaymentsHistory(invoice)}
-                            title="سجل المدفوعات"
-                          >
-                            <History className="w-4 h-4 text-blue-600" />
-                          </Button>
-                          {invoice.status === "overdue" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleSendReminder(invoice)}
-                              title="إرسال تذكير"
-                            >
-                              <Mail className="w-4 h-4 text-orange-500" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(invoice.id)}
-                            title="حذف"
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* View Invoice Dialog */}
-          <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center justify-between">
-                  <span>تفاصيل الفاتورة</span>
-                  <Button variant="outline" size="sm" onClick={() => window.print()}>
-                    <Printer className="w-4 h-4 ml-2" />
-                    طباعة
-                  </Button>
-                </DialogTitle>
-              </DialogHeader>
-              {selectedInvoice && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-muted-foreground">رقم الفاتورة</Label>
-                      <p className="font-medium">{selectedInvoice.invoice_number}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">العميل</Label>
-                      <p>{selectedInvoice.customer?.name || "-"}</p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">تاريخ الفاتورة</Label>
-                      <p>
-                        {format(new Date(selectedInvoice.invoice_date), "dd/MM/yyyy", {
-                          locale: ar,
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">تاريخ الاستحقاق</Label>
-                      <p>
-                        {selectedInvoice.due_date
-                          ? format(new Date(selectedInvoice.due_date), "dd/MM/yyyy", { locale: ar })
-                          : "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground">الحالة</Label>
-                      <div className="mt-1">{getStatusBadge(selectedInvoice.status)}</div>
-                    </div>
-                  </div>
-
-                  {/* Invoice Items */}
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>المنتج</TableHead>
-                          <TableHead>الكمية</TableHead>
-                          <TableHead>سعر الوحدة</TableHead>
-                          <TableHead>الإجمالي</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {invoiceItems.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{item.product_name || item.description}</TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            <TableCell>{item.unit_price} جنيه</TableCell>
-                            <TableCell>{item.total} جنيه</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                    <div className="flex justify-between">
-                      <span>المجموع الفرعي:</span>
-                      <span>{selectedInvoice.subtotal?.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>الخصم ({selectedInvoice.discount_rate}%):</span>
-                      <span>-{selectedInvoice.discount_amount?.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>الضريبة ({selectedInvoice.tax_rate}%):</span>
-                      <span>{selectedInvoice.tax_amount?.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                      <span>الإجمالي:</span>
-                      <span>{selectedInvoice.total?.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between text-green-600">
-                      <span>المدفوع:</span>
-                      <span>{selectedInvoice.paid_amount?.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between text-destructive font-medium">
-                      <span>المتبقي:</span>
-                      <span>
-                        {(selectedInvoice.total - selectedInvoice.paid_amount)?.toFixed(2)} جنيه
-                      </span>
-                    </div>
-                  </div>
-
-                  {selectedInvoice.notes && (
-                    <div>
-                      <Label className="text-muted-foreground">ملاحظات</Label>
-                      <p>{selectedInvoice.notes}</p>
-                    </div>
-                  )}
+                <div className="space-y-2">
+                  <Label>العميل</Label>
+                  <Select value={customerId} onValueChange={setCustomerId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر العميل" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map((customer) => (
+                        <SelectItem key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-            </DialogContent>
-          </Dialog>
+                <div className="space-y-2">
+                  <Label>تاريخ الفاتورة</Label>
+                  <Input
+                    type="date"
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>تاريخ الاستحقاق</Label>
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          {/* Payment Dialog */}
-          <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5" />
-                  تسجيل دفعة جديدة
-                </DialogTitle>
-              </DialogHeader>
-              {selectedInvoice && (
-                <div className="space-y-4">
-                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                    <div className="flex justify-between">
-                      <span>رقم الفاتورة:</span>
-                      <span className="font-medium">{selectedInvoice.invoice_number}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>إجمالي الفاتورة:</span>
-                      <span>{selectedInvoice.total?.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between text-green-600">
-                      <span>المدفوع:</span>
-                      <span>{selectedInvoice.paid_amount?.toFixed(2)} جنيه</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-destructive">
-                      <span>المتبقي:</span>
-                      <span>{(selectedInvoice.total - selectedInvoice.paid_amount)?.toFixed(2)} جنيه</span>
-                    </div>
-                  </div>
-
+              {/* Add Product */}
+              <div className="border rounded-lg p-4 space-y-4">
+                <h3 className="font-semibold">إضافة منتج</h3>
+                <div className="grid grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label>المبلغ</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max={selectedInvoice.total - selectedInvoice.paid_amount}
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>طريقة الدفع</Label>
-                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <Label>المنتج</Label>
+                    <Select
+                      value={selectedProductId}
+                      onValueChange={setSelectedProductId}
+                    >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="اختر المنتج" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cash">نقداً</SelectItem>
-                        <SelectItem value="card">بطاقة</SelectItem>
-                        <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
-                        <SelectItem value="check">شيك</SelectItem>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} - {product.selling_price} جنيه
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div className="space-y-2">
-                    <Label>رقم المرجع (اختياري)</Label>
+                    <Label>الوصف</Label>
                     <Input
-                      value={paymentReference}
-                      onChange={(e) => setPaymentReference(e.target.value)}
-                      placeholder="رقم الشيك / التحويل..."
+                      value={itemDescription}
+                      onChange={(e) => setItemDescription(e.target.value)}
+                      placeholder="وصف البند"
                     />
                   </div>
-
                   <div className="space-y-2">
-                    <Label>ملاحظات (اختياري)</Label>
-                    <Textarea
-                      value={paymentNotes}
-                      onChange={(e) => setPaymentNotes(e.target.value)}
-                      placeholder="ملاحظات..."
+                    <Label>الكمية</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={itemQuantity}
+                      onChange={(e) =>
+                        setItemQuantity(parseInt(e.target.value) || 1)
+                      }
                     />
                   </div>
-
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
-                      إلغاء
-                    </Button>
-                    <Button onClick={handleAddPayment}>
-                      <CreditCard className="w-4 h-4 ml-2" />
-                      تسجيل الدفعة
+                  <div className="flex items-end">
+                    <Button type="button" onClick={addItem} className="w-full">
+                      <Plus className="w-4 h-4 ml-2" />
+                      إضافة
                     </Button>
                   </div>
                 </div>
-              )}
-            </DialogContent>
-          </Dialog>
+              </div>
 
-          {/* Payments History Dialog */}
-          <Dialog open={isPaymentsHistoryOpen} onOpenChange={setIsPaymentsHistoryOpen}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <History className="w-5 h-5" />
-                  سجل المدفوعات
-                  {selectedInvoice && ` - ${selectedInvoice.invoice_number}`}
-                </DialogTitle>
-              </DialogHeader>
-              {selectedInvoice && (
-                <div className="space-y-4">
-                  <div className="bg-muted p-4 rounded-lg">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <p className="text-sm text-muted-foreground">إجمالي الفاتورة</p>
-                        <p className="text-lg font-bold">{selectedInvoice.total?.toFixed(2)} جنيه</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">المدفوع</p>
-                        <p className="text-lg font-bold text-green-600">{selectedInvoice.paid_amount?.toFixed(2)} جنيه</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">المتبقي</p>
-                        <p className="text-lg font-bold text-destructive">
-                          {(selectedInvoice.total - selectedInvoice.paid_amount)?.toFixed(2)} جنيه
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {invoicePayments.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      لا توجد مدفوعات مسجلة
-                    </p>
-                  ) : (
-                    <div className="border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>التاريخ</TableHead>
-                            <TableHead>المبلغ</TableHead>
-                            <TableHead>طريقة الدفع</TableHead>
-                            <TableHead>المرجع</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {invoicePayments.map((payment) => (
-                            <TableRow key={payment.id}>
-                              <TableCell>
-                                {format(new Date(payment.payment_date), "dd/MM/yyyy HH:mm", { locale: ar })}
-                              </TableCell>
-                              <TableCell className="font-medium text-green-600">
-                                {payment.amount?.toFixed(2)} جنيه
-                              </TableCell>
-                              <TableCell>{getPaymentMethodLabel(payment.payment_method)}</TableCell>
-                              <TableCell>{payment.reference_number || "-"}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end">
-                    <Button variant="outline" onClick={() => setIsPaymentsHistoryOpen(false)}>
-                      إغلاق
-                    </Button>
-                  </div>
+              {/* Items Table */}
+              {items.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>المنتج</TableHead>
+                        <TableHead>الوصف</TableHead>
+                        <TableHead>الكمية</TableHead>
+                        <TableHead>سعر الوحدة</TableHead>
+                        <TableHead>الإجمالي</TableHead>
+                        <TableHead>إجراءات</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {items.map((item) => (
+                        <TableRow key={item.product_id}>
+                          <TableCell>{item.product_name}</TableCell>
+                          <TableCell>{item.description}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.unit_price} جنيه</TableCell>
+                          <TableCell>{item.total} جنيه</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeItem(item.product_id)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
-            </DialogContent>
-          </Dialog>
-        </main>
+
+              {/* Totals */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>نسبة الخصم (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={discountRate}
+                    onChange={(e) =>
+                      setDiscountRate(parseFloat(e.target.value) || 0)
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>نسبة الضريبة (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={taxRate}
+                    onChange={(e) =>
+                      setTaxRate(parseFloat(e.target.value) || 0)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span>المجموع الفرعي:</span>
+                  <span>{subtotal.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>الخصم ({discountRate}%):</span>
+                  <span>-{discountAmount.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>الضريبة ({taxRate}%):</span>
+                  <span>{taxAmount.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                  <span>الإجمالي:</span>
+                  <span>{total.toFixed(2)} جنيه</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>ملاحظات</Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="ملاحظات إضافية..."
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  إلغاء
+                </Button>
+                <Button onClick={handleSubmit}>إنشاء الفاتورة</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      {/* Invoices Table */}
+      <div className="bg-card rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>رقم الفاتورة</TableHead>
+              <TableHead>التاريخ</TableHead>
+              <TableHead>العميل</TableHead>
+              <TableHead>الإجمالي</TableHead>
+              <TableHead>المدفوع</TableHead>
+              <TableHead>الحالة</TableHead>
+              <TableHead>إجراءات</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8">
+                  جاري التحميل...
+                </TableCell>
+              </TableRow>
+            ) : invoices.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  لا توجد فواتير
+                </TableCell>
+              </TableRow>
+            ) : (
+              invoices.map((invoice) => (
+                <TableRow key={invoice.id}>
+                  <TableCell className="font-medium">
+                    {invoice.invoice_number}
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(invoice.invoice_date), "dd/MM/yyyy", {
+                      locale: ar,
+                    })}
+                  </TableCell>
+                  <TableCell>{invoice.customer?.name || "-"}</TableCell>
+                  <TableCell>{invoice.total?.toFixed(2)} جنيه</TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <span className="text-green-600">
+                        {invoice.paid_amount?.toFixed(2)}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        / {invoice.total?.toFixed(2)}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={invoice.status}
+                      onValueChange={(value) =>
+                        handleStatusChange(
+                          invoice.id,
+                          value as
+                            | "draft"
+                            | "sent"
+                            | "paid"
+                            | "overdue"
+                            | "cancelled"
+                        )
+                      }
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue>
+                          {getStatusBadge(invoice.status)}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">مسودة</SelectItem>
+                        <SelectItem value="sent">مرسلة</SelectItem>
+                        <SelectItem value="paid">مدفوعة</SelectItem>
+                        <SelectItem value="overdue">متأخرة</SelectItem>
+                        <SelectItem value="cancelled">ملغاة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => viewInvoice(invoice)}
+                        title="عرض"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleExportPDF(invoice)}
+                        title="تصدير PDF"
+                      >
+                        <Download className="w-4 h-4 text-primary" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openPaymentDialog(invoice)}
+                        title="تسجيل دفعة"
+                        disabled={
+                          invoice.status === "paid" ||
+                          invoice.status === "cancelled"
+                        }
+                      >
+                        <CreditCard className="w-4 h-4 text-green-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openPaymentsHistory(invoice)}
+                        title="سجل المدفوعات"
+                      >
+                        <History className="w-4 h-4 text-blue-600" />
+                      </Button>
+                      {invoice.status === "overdue" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleSendReminder(invoice)}
+                          title="إرسال تذكير"
+                        >
+                          <Mail className="w-4 h-4 text-orange-500" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(invoice.id)}
+                        title="حذف"
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* View Invoice Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>تفاصيل الفاتورة</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+              >
+                <Printer className="w-4 h-4 ml-2" />
+                طباعة
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          {selectedInvoice && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">رقم الفاتورة</Label>
+                  <p className="font-medium">
+                    {selectedInvoice.invoice_number}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">العميل</Label>
+                  <p>{selectedInvoice.customer?.name || "-"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">
+                    تاريخ الفاتورة
+                  </Label>
+                  <p>
+                    {format(
+                      new Date(selectedInvoice.invoice_date),
+                      "dd/MM/yyyy",
+                      {
+                        locale: ar,
+                      }
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">
+                    تاريخ الاستحقاق
+                  </Label>
+                  <p>
+                    {selectedInvoice.due_date
+                      ? format(
+                          new Date(selectedInvoice.due_date),
+                          "dd/MM/yyyy",
+                          { locale: ar }
+                        )
+                      : "-"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">الحالة</Label>
+                  <div className="mt-1">
+                    {getStatusBadge(selectedInvoice.status)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Invoice Items */}
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>المنتج</TableHead>
+                      <TableHead>الكمية</TableHead>
+                      <TableHead>سعر الوحدة</TableHead>
+                      <TableHead>الإجمالي</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoiceItems.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          {item.product_name || item.description}
+                        </TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>{item.unit_price} جنيه</TableCell>
+                        <TableCell>{item.total} جنيه</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span>المجموع الفرعي:</span>
+                  <span>{selectedInvoice.subtotal?.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>الخصم ({selectedInvoice.discount_rate}%):</span>
+                  <span>
+                    -{selectedInvoice.discount_amount?.toFixed(2)} جنيه
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>الضريبة ({selectedInvoice.tax_rate}%):</span>
+                  <span>{selectedInvoice.tax_amount?.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                  <span>الإجمالي:</span>
+                  <span>{selectedInvoice.total?.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>المدفوع:</span>
+                  <span>{selectedInvoice.paid_amount?.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between text-destructive font-medium">
+                  <span>المتبقي:</span>
+                  <span>
+                    {(
+                      selectedInvoice.total - selectedInvoice.paid_amount
+                    )?.toFixed(2)}{" "}
+                    جنيه
+                  </span>
+                </div>
+              </div>
+
+              {selectedInvoice.notes && (
+                <div>
+                  <Label className="text-muted-foreground">ملاحظات</Label>
+                  <p>{selectedInvoice.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              تسجيل دفعة جديدة
+            </DialogTitle>
+          </DialogHeader>
+          {selectedInvoice && (
+            <div className="space-y-4">
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span>رقم الفاتورة:</span>
+                  <span className="font-medium">
+                    {selectedInvoice.invoice_number}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>إجمالي الفاتورة:</span>
+                  <span>{selectedInvoice.total?.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>المدفوع:</span>
+                  <span>{selectedInvoice.paid_amount?.toFixed(2)} جنيه</span>
+                </div>
+                <div className="flex justify-between font-bold text-destructive">
+                  <span>المتبقي:</span>
+                  <span>
+                    {(
+                      selectedInvoice.total - selectedInvoice.paid_amount
+                    )?.toFixed(2)}{" "}
+                    جنيه
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>المبلغ</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max={selectedInvoice.total - selectedInvoice.paid_amount}
+                  value={paymentAmount}
+                  onChange={(e) =>
+                    setPaymentAmount(parseFloat(e.target.value) || 0)
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>طريقة الدفع</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">نقداً</SelectItem>
+                    <SelectItem value="card">بطاقة</SelectItem>
+                    <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
+                    <SelectItem value="check">شيك</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>رقم المرجع (اختياري)</Label>
+                <Input
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder="رقم الشيك / التحويل..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>ملاحظات (اختياري)</Label>
+                <Textarea
+                  value={paymentNotes}
+                  onChange={(e) => setPaymentNotes(e.target.value)}
+                  placeholder="ملاحظات..."
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsPaymentDialogOpen(false)}
+                >
+                  إلغاء
+                </Button>
+                <Button onClick={handleAddPayment}>
+                  <CreditCard className="w-4 h-4 ml-2" />
+                  تسجيل الدفعة
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Payments History Dialog */}
+      <Dialog
+        open={isPaymentsHistoryOpen}
+        onOpenChange={setIsPaymentsHistoryOpen}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="w-5 h-5" />
+              سجل المدفوعات
+              {selectedInvoice && ` - ${selectedInvoice.invoice_number}`}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedInvoice && (
+            <div className="space-y-4">
+              <div className="bg-muted p-4 rounded-lg">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      إجمالي الفاتورة
+                    </p>
+                    <p className="text-lg font-bold">
+                      {selectedInvoice.total?.toFixed(2)} جنيه
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">المدفوع</p>
+                    <p className="text-lg font-bold text-green-600">
+                      {selectedInvoice.paid_amount?.toFixed(2)} جنيه
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">المتبقي</p>
+                    <p className="text-lg font-bold text-destructive">
+                      {(
+                        selectedInvoice.total - selectedInvoice.paid_amount
+                      )?.toFixed(2)}{" "}
+                      جنيه
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {invoicePayments.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  لا توجد مدفوعات مسجلة
+                </p>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>التاريخ</TableHead>
+                        <TableHead>المبلغ</TableHead>
+                        <TableHead>طريقة الدفع</TableHead>
+                        <TableHead>المرجع</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invoicePayments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell>
+                            {format(
+                              new Date(payment.payment_date),
+                              "dd/MM/yyyy HH:mm",
+                              { locale: ar }
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium text-green-600">
+                            {payment.amount?.toFixed(2)} جنيه
+                          </TableCell>
+                          <TableCell>
+                            {getPaymentMethodLabel(payment.payment_method)}
+                          </TableCell>
+                          <TableCell>
+                            {payment.reference_number || "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsPaymentsHistoryOpen(false)}
+                >
+                  إغلاق
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
