@@ -169,7 +169,9 @@ const AuditLogs = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (log) =>
-          log.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          log.profile?.full_name
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           getActionLabel(log.action_type).includes(searchTerm)
       );
     }
@@ -188,7 +190,9 @@ const AuditLogs = () => {
       oldValue: log.old_value ? JSON.stringify(log.old_value) : "",
       newValue: log.new_value ? JSON.stringify(log.new_value) : "",
       userName: log.profile?.full_name || "غير معروف",
-      createdAt: format(new Date(log.created_at), "yyyy-MM-dd HH:mm", { locale: ar }),
+      createdAt: format(new Date(log.created_at), "yyyy-MM-dd HH:mm", {
+        locale: ar,
+      }),
     }));
 
     exportAuditLogsToExcel(exportData, companyName);
@@ -206,7 +210,11 @@ const AuditLogs = () => {
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "؟";
-    return name.split(" ").map((n) => n[0]).join("").slice(0, 2);
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2);
   };
 
   const formatValue = (value: unknown): string => {
@@ -257,9 +265,196 @@ const AuditLogs = () => {
       </div>
 
       {/* Stats */}
-      {/* ... (rest of the content) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4" dir="rtl">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <History className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-2xl font-bold">{logs.length}</p>
+                <p className="text-sm text-muted-foreground">إجمالي السجلات</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Shield className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="text-left">
+                <p className="text-2xl font-bold">
+                  {logs.filter((l) => l.action_type === "role_change").length}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  تغييرات الصلاحيات
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Mail className="w-5 h-5 text-purple-600" />
+              </div>
+              <div className="text-left">
+                <p className="text-2xl font-bold">
+                  {
+                    logs.filter((l) => l.action_type === "invitation_sent")
+                      .length
+                  }
+                </p>
+                <p className="text-sm text-muted-foreground">الدعوات المرسلة</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <UserPlus className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="text-left">
+                <p className="text-2xl font-bold">
+                  {logs.filter((l) => l.action_type === "user_added").length}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  المستخدمين المضافين
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card dir="rtl">
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="البحث في السجلات..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pr-10"
+              />
+            </div>
+            <div className="w-full md:w-48">
+              <Select value={actionFilter} onValueChange={setActionFilter}>
+                <SelectTrigger>
+                  <Filter className="w-4 h-4 ml-2" />
+                  <SelectValue placeholder="فلترة حسب الإجراء" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع الإجراءات</SelectItem>
+                  <SelectItem value="role_change">تغيير الصلاحية</SelectItem>
+                  <SelectItem value="user_added">إضافة مستخدم</SelectItem>
+                  <SelectItem value="user_removed">إزالة مستخدم</SelectItem>
+                  <SelectItem value="invitation_sent">إرسال دعوة</SelectItem>
+                  <SelectItem value="invitation_accepted">قبول دعوة</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Logs Table */}
+      <Card dir="rtl">
+        <CardHeader>
+          <CardTitle>سجل الإجراءات</CardTitle>
+          <CardDescription>
+            عرض {filteredLogs.length} من {logs.length} سجل
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-right">الإجراء</TableHead>
+                <TableHead className="text-right">المستخدم</TableHead>
+                <TableHead className="text-right">التفاصيل</TableHead>
+                <TableHead className="text-right">التاريخ</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLogs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell>
+                    <Badge
+                      className={`gap-1 ${
+                        actionColors[log.action_type] ||
+                        "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {actionIcons[log.action_type] || (
+                        <User className="w-4 h-4" />
+                      )}
+                      {getActionLabel(log.action_type)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                          {getInitials(log.profile?.full_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{log.profile?.full_name || "غير معروف"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">
+                        {getTargetTypeLabel(log.target_type)}:
+                      </span>
+                      {log.old_value && log.new_value ? (
+                        <span className="mr-1">
+                          <span className="line-through text-red-500">
+                            {formatValue(log.old_value)}
+                          </span>
+                          {" → "}
+                          <span className="text-green-600">
+                            {formatValue(log.new_value)}
+                          </span>
+                        </span>
+                      ) : log.new_value ? (
+                        <span className="mr-1 text-green-600">
+                          {formatValue(log.new_value)}
+                        </span>
+                      ) : (
+                        <span className="mr-1">-</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(log.created_at), "dd MMM yyyy - HH:mm", {
+                        locale: ar,
+                      })}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {filteredLogs.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>لا توجد سجلات</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </DashboardLayout>
-  );
   );
 };
 

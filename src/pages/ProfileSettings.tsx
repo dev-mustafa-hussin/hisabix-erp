@@ -4,14 +4,23 @@ import { User, Mail, Phone, Camera, Save, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { toastSuccess, toastError, toastInfo } from "@/utils/toastNotifications";
+import {
+  toastSuccess,
+  toastError,
+  toastInfo,
+} from "@/utils/toastNotifications";
 
 interface Profile {
   id: string;
@@ -92,7 +101,9 @@ const ProfileSettings = () => {
     }
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
@@ -134,129 +145,128 @@ const ProfileSettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background transition-colors duration-300">
-      <Sidebar />
-      <Header />
+    <DashboardLayout>
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/dashboard")}
+        className="gap-2 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowRight className="w-4 h-4" />
+        العودة للوحة التحكم
+      </Button>
 
-      <main className="lg:mr-64 pt-14 p-4 lg:p-6 space-y-6">
-        {/* Back Button */}
+      <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+        {/* Profile Header */}
+        <Card className="transition-all duration-300 hover:shadow-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="relative group">
+                <Avatar className="w-24 h-24 border-4 border-primary/20 transition-transform duration-300 group-hover:scale-105">
+                  <AvatarImage src={avatarUrl || undefined} alt={fullName} />
+                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                    {fullName ? (
+                      getInitials(fullName)
+                    ) : (
+                      <User className="w-10 h-10" />
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+                <label
+                  htmlFor="avatar-upload"
+                  className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full cursor-pointer transition-all duration-200 hover:scale-110 shadow-lg"
+                >
+                  <Camera className="w-4 h-4" />
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={uploading}
+                  />
+                </label>
+              </div>
+            </div>
+            <CardTitle className="text-xl">إعدادات الملف الشخصي</CardTitle>
+            <CardDescription>قم بتحديث معلوماتك الشخصية</CardDescription>
+          </CardHeader>
+        </Card>
+
+        {/* Profile Form */}
+        <Card className="transition-all duration-300 hover:shadow-md">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" />
+              المعلومات الأساسية
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-muted-foreground" />
+                البريد الإلكتروني
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={user?.email || ""}
+                disabled
+                className="bg-muted/50"
+              />
+              <p className="text-xs text-muted-foreground">
+                البريد الإلكتروني غير قابل للتعديل
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="flex items-center gap-2">
+                <User className="w-4 h-4 text-muted-foreground" />
+                الاسم الكامل
+              </Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="أدخل اسمك الكامل"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                رقم الهاتف
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="أدخل رقم هاتفك"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={loading}
+                dir="ltr"
+                className="text-left"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Save Button */}
         <Button
-          variant="ghost"
-          onClick={() => navigate("/dashboard")}
-          className="gap-2 text-muted-foreground hover:text-foreground"
+          onClick={handleSave}
+          disabled={saving || loading}
+          className="w-full gap-2 transition-all duration-200 hover:scale-[1.02]"
+          size="lg"
         >
-          <ArrowRight className="w-4 h-4" />
-          العودة للوحة التحكم
+          <Save className="w-5 h-5" />
+          {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
         </Button>
-
-        <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
-          {/* Profile Header */}
-          <Card className="transition-all duration-300 hover:shadow-md">
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <div className="relative group">
-                  <Avatar className="w-24 h-24 border-4 border-primary/20 transition-transform duration-300 group-hover:scale-105">
-                    <AvatarImage src={avatarUrl || undefined} alt={fullName} />
-                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                      {fullName ? getInitials(fullName) : <User className="w-10 h-10" />}
-                    </AvatarFallback>
-                  </Avatar>
-                  <label
-                    htmlFor="avatar-upload"
-                    className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full cursor-pointer transition-all duration-200 hover:scale-110 shadow-lg"
-                  >
-                    <Camera className="w-4 h-4" />
-                    <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleAvatarUpload}
-                      disabled={uploading}
-                    />
-                  </label>
-                </div>
-              </div>
-              <CardTitle className="text-xl">إعدادات الملف الشخصي</CardTitle>
-              <CardDescription>قم بتحديث معلوماتك الشخصية</CardDescription>
-            </CardHeader>
-          </Card>
-
-          {/* Profile Form */}
-          <Card className="transition-all duration-300 hover:shadow-md">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <User className="w-5 h-5 text-primary" />
-                المعلومات الأساسية
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  البريد الإلكتروني
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={user?.email || ""}
-                  disabled
-                  className="bg-muted/50"
-                />
-                <p className="text-xs text-muted-foreground">
-                  البريد الإلكتروني غير قابل للتعديل
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-muted-foreground" />
-                  الاسم الكامل
-                </Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="أدخل اسمك الكامل"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  رقم الهاتف
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="أدخل رقم هاتفك"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  disabled={loading}
-                  dir="ltr"
-                  className="text-left"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Save Button */}
-          <Button
-            onClick={handleSave}
-            disabled={saving || loading}
-            className="w-full gap-2 transition-all duration-200 hover:scale-[1.02]"
-            size="lg"
-          >
-            <Save className="w-5 h-5" />
-            {saving ? "جاري الحفظ..." : "حفظ التغييرات"}
-          </Button>
-        </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

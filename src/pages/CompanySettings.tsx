@@ -1,7 +1,18 @@
 import { useState, useEffect, useRef } from "react";
-import { Building2, Save, Loader2, Globe, Phone, MapPin, Calendar, DollarSign, Upload, X, Image } from "lucide-react";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import {
+  Building2,
+  Save,
+  Loader2,
+  Globe,
+  Phone,
+  MapPin,
+  Calendar,
+  DollarSign,
+  Upload,
+  X,
+  Image,
+} from "lucide-react";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,7 +81,7 @@ const CompanySettings = () => {
     if (!user?.id) return;
 
     setLoading(true);
-    
+
     // Get user's company
     const { data: companyUsers, error: cuError } = await supabase
       .from("company_users")
@@ -285,11 +296,8 @@ const CompanySettings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Sidebar />
-      <Header />
-
-      <main className="mr-64 pt-14 p-6 space-y-6">
+    <DashboardLayout>
+      <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div />
@@ -307,7 +315,9 @@ const CompanySettings = () => {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Building2 className="w-12 h-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">لا توجد شركة مرتبطة بحسابك</p>
+              <p className="text-muted-foreground">
+                لا توجد شركة مرتبطة بحسابك
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -399,7 +409,9 @@ const CompanySettings = () => {
                     <Label>اسم الشركة (عربي)</Label>
                     <Input
                       value={formData.name_ar}
-                      onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name_ar: e.target.value })
+                      }
                       placeholder="اسم الشركة بالعربي"
                     />
                   </div>
@@ -407,7 +419,9 @@ const CompanySettings = () => {
                     <Label>اسم الشركة (إنجليزي) *</Label>
                     <Input
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
                       placeholder="Company Name"
                       dir="ltr"
                     />
@@ -419,7 +433,9 @@ const CompanySettings = () => {
                     <div className="relative">
                       <Input
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
                         placeholder="01xxxxxxxxx"
                         className="pr-10"
                       />
@@ -431,7 +447,9 @@ const CompanySettings = () => {
                     <Input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
                       placeholder="info@company.com"
                       dir="ltr"
                     />
@@ -442,7 +460,9 @@ const CompanySettings = () => {
                     <Label>الرقم الضريبي</Label>
                     <Input
                       value={formData.tax_number}
-                      onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, tax_number: e.target.value })
+                      }
                       placeholder="الرقم الضريبي"
                     />
                   </div>
@@ -451,7 +471,9 @@ const CompanySettings = () => {
                     <div className="relative">
                       <Input
                         value={formData.website}
-                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, website: e.target.value })
+                        }
                         placeholder="www.company.com"
                         dir="ltr"
                         className="pr-10"
@@ -480,7 +502,9 @@ const CompanySettings = () => {
                     <Label>المدينة</Label>
                     <Input
                       value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, city: e.target.value })
+                      }
                       placeholder="المدينة"
                     />
                   </div>
@@ -488,7 +512,9 @@ const CompanySettings = () => {
                     <Label>الدولة</Label>
                     <Input
                       value={formData.country}
-                      onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, country: e.target.value })
+                      }
                       placeholder="الدولة"
                     />
                   </div>
@@ -497,7 +523,9 @@ const CompanySettings = () => {
                   <Label>العنوان التفصيلي</Label>
                   <Input
                     value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
                     placeholder="العنوان بالتفصيل"
                   />
                 </div>
@@ -519,9 +547,11 @@ const CompanySettings = () => {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>العملة</Label>
-                    <Select 
-                      value={formData.currency} 
-                      onValueChange={(v) => setFormData({ ...formData, currency: v })}
+                    <Select
+                      value={formData.currency}
+                      onValueChange={(v) =>
+                        setFormData({ ...formData, currency: v })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر العملة" />
@@ -538,19 +568,31 @@ const CompanySettings = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>المنطقة الزمنية</Label>
-                    <Select 
-                      value={formData.timezone} 
-                      onValueChange={(v) => setFormData({ ...formData, timezone: v })}
+                    <Select
+                      value={formData.timezone}
+                      onValueChange={(v) =>
+                        setFormData({ ...formData, timezone: v })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر المنطقة الزمنية" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Africa/Cairo">القاهرة (Africa/Cairo)</SelectItem>
-                        <SelectItem value="Asia/Riyadh">الرياض (Asia/Riyadh)</SelectItem>
-                        <SelectItem value="Asia/Dubai">دبي (Asia/Dubai)</SelectItem>
-                        <SelectItem value="Asia/Kuwait">الكويت (Asia/Kuwait)</SelectItem>
-                        <SelectItem value="Asia/Qatar">قطر (Asia/Qatar)</SelectItem>
+                        <SelectItem value="Africa/Cairo">
+                          القاهرة (Africa/Cairo)
+                        </SelectItem>
+                        <SelectItem value="Asia/Riyadh">
+                          الرياض (Asia/Riyadh)
+                        </SelectItem>
+                        <SelectItem value="Asia/Dubai">
+                          دبي (Asia/Dubai)
+                        </SelectItem>
+                        <SelectItem value="Asia/Kuwait">
+                          الكويت (Asia/Kuwait)
+                        </SelectItem>
+                        <SelectItem value="Asia/Qatar">
+                          قطر (Asia/Qatar)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -560,7 +602,12 @@ const CompanySettings = () => {
                       <Input
                         type="date"
                         value={formData.financial_year_start}
-                        onChange={(e) => setFormData({ ...formData, financial_year_start: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            financial_year_start: e.target.value,
+                          })
+                        }
                       />
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     </div>
@@ -582,8 +629,8 @@ const CompanySettings = () => {
             </div>
           </form>
         )}
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
