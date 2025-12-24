@@ -126,11 +126,23 @@ const Register = () => {
   const handleRegister = async () => {
     setIsLoading(true);
 
-    // 1. Create user account
+    // 1. Create user account with company metadata
     const { data: signUpData, error: signUpError } = await signUp(
       formData.email,
       formData.password,
-      formData.fullName
+      formData.fullName,
+      {
+        business_name: formData.businessName,
+        company_phone: formData.companyPhone,
+        website: formData.website,
+        address: formData.address,
+        city: formData.city,
+        country: formData.country,
+        currency: formData.currency,
+        timezone: formData.timezone,
+        start_date: formData.startDate,
+        phone: formData.phone, // Profile phone
+      }
     );
 
     if (signUpError) {
@@ -144,65 +156,10 @@ const Register = () => {
       return;
     }
 
-    const userId = signUpData?.user?.id;
-
-    if (!userId) {
-      setIsLoading(false);
-      toast({
-        title: "خطأ",
-        description: "فشل في إنشاء الحساب",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // 2. Create company
-    const { data: companyData, error: companyError } = await supabase
-      .from("companies")
-      .insert({
-        name: formData.businessName,
-        phone: formData.companyPhone || null,
-        website: formData.website || null,
-        address: formData.address || null,
-        city: formData.city || null,
-        country: formData.country || "مصر",
-        currency: formData.currency || "EGP",
-        timezone: formData.timezone || "Africa/Cairo",
-        financial_year_start:
-          formData.startDate || new Date().toISOString().split("T")[0],
-      })
-      .select()
-      .single();
-
-    if (companyError) {
-      console.error("Company creation error:", companyError);
-      setIsLoading(false);
-      toast({
-        title: "تحذير",
-        description:
-          "تم إنشاء الحساب ولكن فشل في إنشاء الشركة. يمكنك إنشاءها لاحقاً.",
-        variant: "destructive",
-      });
-      navigate("/dashboard");
-      return;
-    }
-
-    // 3. Link user to company as owner
-    const { error: linkError } = await supabase.from("company_users").insert({
-      company_id: companyData.id,
-      user_id: userId,
-      role: "admin",
-      is_owner: true,
-    });
-
-    if (linkError) {
-      console.error("Company user link error:", linkError);
-    }
-
     setIsLoading(false);
     toast({
       title: "تم التسجيل بنجاح",
-      description: "مرحباً بك في HisabiX - تم إنشاء شركتك",
+      description: "مرحباً بك في HisabiX - سيتم توجيهك الآن",
     });
     navigate("/dashboard");
   };
