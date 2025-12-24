@@ -20,6 +20,15 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      console.log("index.html: Inline script executing");
+      document.addEventListener("DOMContentLoaded", () => {
+        console.log("index.html: DOMContentLoaded");
+      });
+      window.onload = () => {
+        console.log("index.html: window.onload");
+      };
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

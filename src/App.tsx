@@ -31,166 +31,169 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <SidebarProvider>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route
-                  path="/accept-invitation"
-                  element={<AcceptInvitation />}
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/customers"
-                  element={
-                    <ProtectedRoute>
-                      <Customers />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/products"
-                  element={
-                    <ProtectedRoute>
-                      <Products />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/inventory"
-                  element={
-                    <ProtectedRoute>
-                      <Inventory />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/sales"
-                  element={
-                    <ProtectedRoute>
-                      <Sales />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/invoices"
-                  element={
-                    <ProtectedRoute>
-                      <Invoices />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports"
-                  element={
-                    <ProtectedRoute>
-                      <Reports />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/receivables"
-                  element={
-                    <ProtectedRoute>
-                      <Receivables />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/company-settings"
-                  element={
-                    <ProtectedRoute>
-                      <CompanySettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notification-settings"
-                  element={
-                    <ProtectedRoute>
-                      <NotificationSettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notification-logs"
-                  element={
-                    <ProtectedRoute>
-                      <NotificationLogs />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/inventory-report"
-                  element={
-                    <ProtectedRoute>
-                      <InventoryReport />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notifications-dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <NotificationsDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/user-management"
-                  element={
-                    <ProtectedRoute>
-                      <UserManagement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/audit-logs"
-                  element={
-                    <ProtectedRoute>
-                      <AuditLogs />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile-settings"
-                  element={
-                    <ProtectedRoute>
-                      <ProfileSettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/online-store-settings"
-                  element={
-                    <ProtectedRoute>
-                      <OnlineStoreSettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </SidebarProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  console.log("App: Rendering started");
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <SidebarProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route
+                    path="/accept-invitation"
+                    element={<AcceptInvitation />}
+                  />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/customers"
+                    element={
+                      <ProtectedRoute>
+                        <Customers />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/products"
+                    element={
+                      <ProtectedRoute>
+                        <Products />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/inventory"
+                    element={
+                      <ProtectedRoute>
+                        <Inventory />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/sales"
+                    element={
+                      <ProtectedRoute>
+                        <Sales />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/invoices"
+                    element={
+                      <ProtectedRoute>
+                        <Invoices />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/reports"
+                    element={
+                      <ProtectedRoute>
+                        <Reports />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/receivables"
+                    element={
+                      <ProtectedRoute>
+                        <Receivables />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/company-settings"
+                    element={
+                      <ProtectedRoute>
+                        <CompanySettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/notification-settings"
+                    element={
+                      <ProtectedRoute>
+                        <NotificationSettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/notification-logs"
+                    element={
+                      <ProtectedRoute>
+                        <NotificationLogs />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/inventory-report"
+                    element={
+                      <ProtectedRoute>
+                        <InventoryReport />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/notifications-dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <NotificationsDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/user-management"
+                    element={
+                      <ProtectedRoute>
+                        <UserManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/audit-logs"
+                    element={
+                      <ProtectedRoute>
+                        <AuditLogs />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile-settings"
+                    element={
+                      <ProtectedRoute>
+                        <ProfileSettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/online-store-settings"
+                    element={
+                      <ProtectedRoute>
+                        <OnlineStoreSettings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        </SidebarProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
