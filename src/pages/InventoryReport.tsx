@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -464,28 +463,16 @@ const InventoryReport = () => {
 
   const COLORS = ["#22c55e", "#eab308", "#ef4444", "#3b82f6", "#8b5cf6", "#ec4899"];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-muted/30">
-        <Sidebar />
-        <Header />
-        <main className="mr-64 pt-14 p-6">
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-muted/30">
-      <Sidebar />
-      <Header />
-
-      <main className="mr-64 pt-14 p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <DashboardLayout>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <Button onClick={handleExportExcel} variant="outline" className="gap-2">
               <Download className="w-4 h-4" />
@@ -952,9 +939,10 @@ const InventoryReport = () => {
             )}
           </CardContent>
         </Card>
-      </main>
-    </div>
+      )}
+    </DashboardLayout>
   );
 };
 
 export default InventoryReport;
+```

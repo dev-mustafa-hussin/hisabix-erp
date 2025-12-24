@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/dashboard/Sidebar";
-import Header from "@/components/dashboard/Header";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,10 +108,12 @@ const Receivables = () => {
     // Fetch all unpaid invoices
     const { data: invoices, error } = await supabase
       .from("invoices")
-      .select(`
+      .select(
+        `
         *,
         customer:customers(id, name)
-      `)
+      `
+      )
       .eq("company_id", companyId)
       .not("status", "in", '("paid","cancelled")')
       .order("due_date", { ascending: true });
@@ -212,7 +213,9 @@ const Receivables = () => {
     setTotalReceivables(totalRec);
     setTotalOverdue(totalOver);
     setTotalCustomersWithDebt(Object.keys(customerMap).length);
-    setCollectionRate(totalInvoiced > 0 ? (totalPaid / totalInvoiced) * 100 : 0);
+    setCollectionRate(
+      totalInvoiced > 0 ? (totalPaid / totalInvoiced) * 100 : 0
+    );
 
     // Set customer debts sorted by total debt
     setCustomerDebts(
@@ -221,15 +224,42 @@ const Receivables = () => {
 
     // Set aging buckets
     setAgingBuckets([
-      { label: "غير مستحقة", amount: aging.current.amount, count: aging.current.count, color: "bg-green-500" },
-      { label: "1-30 يوم", amount: aging["1-30"].amount, count: aging["1-30"].count, color: "bg-yellow-500" },
-      { label: "31-60 يوم", amount: aging["31-60"].amount, count: aging["31-60"].count, color: "bg-orange-500" },
-      { label: "61-90 يوم", amount: aging["61-90"].amount, count: aging["61-90"].count, color: "bg-red-400" },
-      { label: "أكثر من 90 يوم", amount: aging["90+"].amount, count: aging["90+"].count, color: "bg-red-600" },
+      {
+        label: "غير مستحقة",
+        amount: aging.current.amount,
+        count: aging.current.count,
+        color: "bg-green-500",
+      },
+      {
+        label: "1-30 يوم",
+        amount: aging["1-30"].amount,
+        count: aging["1-30"].count,
+        color: "bg-yellow-500",
+      },
+      {
+        label: "31-60 يوم",
+        amount: aging["31-60"].amount,
+        count: aging["31-60"].count,
+        color: "bg-orange-500",
+      },
+      {
+        label: "61-90 يوم",
+        amount: aging["61-90"].amount,
+        count: aging["61-90"].count,
+        color: "bg-red-400",
+      },
+      {
+        label: "أكثر من 90 يوم",
+        amount: aging["90+"].amount,
+        count: aging["90+"].count,
+        color: "bg-red-600",
+      },
     ]);
 
     // Set unpaid invoices sorted by days overdue
-    setUnpaidInvoices(unpaidList.sort((a, b) => b.days_overdue - a.days_overdue));
+    setUnpaidInvoices(
+      unpaidList.sort((a, b) => b.days_overdue - a.days_overdue)
+    );
 
     setLoading(false);
   };
@@ -258,7 +288,9 @@ const Receivables = () => {
   const handleSendAllReminders = async () => {
     if (!companyId) return;
 
-    const overdueCount = unpaidInvoices.filter((i) => i.days_overdue > 0).length;
+    const overdueCount = unpaidInvoices.filter(
+      (i) => i.days_overdue > 0
+    ).length;
     if (overdueCount === 0) {
       toast.error("لا توجد فواتير متأخرة");
       return;
@@ -267,9 +299,12 @@ const Receivables = () => {
     toast.loading("جاري إرسال التذكيرات...");
 
     try {
-      const { data, error } = await supabase.functions.invoke("send-invoice-reminder", {
-        body: { companyId, sendAll: true },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "send-invoice-reminder",
+        {
+          body: { companyId, sendAll: true },
+        }
+      );
 
       if (error) throw error;
 
@@ -317,7 +352,9 @@ const Receivables = () => {
                 {suffix}
               </p>
             </div>
-            <div className={`w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center`}>
+            <div
+              className={`w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center`}
+            >
               <Icon className={`w-6 h-6 ${colors[variant]}`} />
             </div>
           </div>
@@ -346,25 +383,29 @@ const Receivables = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      <Sidebar />
-      <div className="mr-64">
-        <Header />
-        <main className="p-6">
-          <div className="flex items-center justify-between mb-6">
+    <DashboardLayout>
+      {loading ? (
+        <div className="text-center py-12">جاري التحميل...</div>
+      ) : (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <DollarSign className="w-8 h-8 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">المستحقات والديون</h1>
+              <h1 className="text-2xl font-bold text-foreground">
+                المستحقات والديون
+              </h1>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleExportPDF}>
                 <Download className="w-4 h-4 ml-2" />
                 تصدير PDF
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleSendAllReminders}
-                disabled={unpaidInvoices.filter(i => i.days_overdue > 0).length === 0}
+                disabled={
+                  unpaidInvoices.filter((i) => i.days_overdue > 0).length === 0
+                }
               >
                 <Mail className="w-4 h-4 ml-2" />
                 إرسال تذكيرات للمتأخرين
@@ -420,21 +461,25 @@ const Receivables = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {agingBuckets.map((bucket, index) => {
-                      const percentage = totalReceivables > 0 
-                        ? (bucket.amount / totalReceivables) * 100 
-                        : 0;
+                      const percentage =
+                        totalReceivables > 0
+                          ? (bucket.amount / totalReceivables) * 100
+                          : 0;
                       return (
                         <div key={index} className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <div className="flex items-center gap-2">
-                              <div className={`w-3 h-3 rounded-full ${bucket.color}`} />
+                              <div
+                                className={`w-3 h-3 rounded-full ${bucket.color}`}
+                              />
                               <span>{bucket.label}</span>
                               <Badge variant="outline" className="text-xs">
                                 {bucket.count} فاتورة
                               </Badge>
                             </div>
                             <span className="font-medium">
-                              {bucket.amount.toLocaleString()} جنيه ({percentage.toFixed(1)}%)
+                              {bucket.amount.toLocaleString()} جنيه (
+                              {percentage.toFixed(1)}%)
                             </span>
                           </div>
                           <Progress value={percentage} className="h-2" />
@@ -471,17 +516,22 @@ const Receivables = () => {
                                 {index + 1}
                               </span>
                               <div>
-                                <p className="font-medium">{customer.customerName}</p>
+                                <p className="font-medium">
+                                  {customer.customerName}
+                                </p>
                                 <p className="text-sm text-muted-foreground">
                                   {customer.invoicesCount} فاتورة
                                 </p>
                               </div>
                             </div>
                             <div className="text-left">
-                              <p className="font-bold">{customer.totalDebt.toLocaleString()} جنيه</p>
+                              <p className="font-bold">
+                                {customer.totalDebt.toLocaleString()} جنيه
+                              </p>
                               {customer.overdueAmount > 0 && (
                                 <p className="text-sm text-destructive">
-                                  متأخر: {customer.overdueAmount.toLocaleString()}
+                                  متأخر:{" "}
+                                  {customer.overdueAmount.toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -501,14 +551,15 @@ const Receivables = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {unpaidInvoices.filter(i => i.days_overdue > 0).length === 0 ? (
+                    {unpaidInvoices.filter((i) => i.days_overdue > 0).length ===
+                    0 ? (
                       <p className="text-center text-muted-foreground py-8">
                         لا توجد فواتير متأخرة
                       </p>
                     ) : (
                       <div className="space-y-3">
                         {unpaidInvoices
-                          .filter(i => i.days_overdue > 0)
+                          .filter((i) => i.days_overdue > 0)
                           .slice(0, 5)
                           .map((invoice) => (
                             <div
@@ -516,7 +567,9 @@ const Receivables = () => {
                               className="flex items-center justify-between p-3 bg-destructive/5 border border-destructive/20 rounded-lg"
                             >
                               <div>
-                                <p className="font-medium">{invoice.invoice_number}</p>
+                                <p className="font-medium">
+                                  {invoice.invoice_number}
+                                </p>
                                 <p className="text-sm text-muted-foreground">
                                   {invoice.customer_name}
                                 </p>
@@ -563,7 +616,10 @@ const Receivables = () => {
                       <TableBody>
                         {unpaidInvoices.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                            <TableCell
+                              colSpan={8}
+                              className="text-center py-8 text-muted-foreground"
+                            >
                               لا توجد فواتير غير مسددة
                             </TableCell>
                           </TableRow>
@@ -574,7 +630,9 @@ const Receivables = () => {
                                 {invoice.invoice_number}
                               </TableCell>
                               <TableCell>{invoice.customer_name}</TableCell>
-                              <TableCell>{invoice.total.toLocaleString()} جنيه</TableCell>
+                              <TableCell>
+                                {invoice.total.toLocaleString()} جنيه
+                              </TableCell>
                               <TableCell className="text-green-600">
                                 {invoice.paid_amount.toLocaleString()} جنيه
                               </TableCell>
@@ -583,11 +641,18 @@ const Receivables = () => {
                               </TableCell>
                               <TableCell>
                                 {invoice.due_date
-                                  ? format(new Date(invoice.due_date), "dd/MM/yyyy", { locale: ar })
+                                  ? format(
+                                      new Date(invoice.due_date),
+                                      "dd/MM/yyyy",
+                                      { locale: ar }
+                                    )
                                   : "-"}
                               </TableCell>
                               <TableCell>
-                                {getStatusBadge(invoice.status, invoice.days_overdue)}
+                                {getStatusBadge(
+                                  invoice.status,
+                                  invoice.days_overdue
+                                )}
                               </TableCell>
                               <TableCell>
                                 <Button
@@ -609,9 +674,9 @@ const Receivables = () => {
               </Card>
             </div>
           )}
-        </main>
-      </div>
-    </div>
+        </div>
+      )}
+    </DashboardLayout>
   );
 };
 
