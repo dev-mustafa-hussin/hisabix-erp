@@ -1,17 +1,26 @@
-console.log("main.tsx: Starting execution");
+console.log("main.tsx: Starting isolation test");
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
 
-console.log("main.tsx: Attempting to render <App />");
+const TestApp = () => {
+  console.log("TestApp: Rendering");
+  return (
+    <div style={{ padding: "50px", fontSize: "24px", color: "red" }}>
+      Hello World - Isolation Test
+    </div>
+  );
+};
+
 try {
-  const root = document.getElementById("root");
-  if (!root) {
-    console.error("main.tsx: Root element not found!");
+  const rootElement = document.getElementById("root");
+  console.log("main.tsx: Root element:", rootElement);
+  if (rootElement) {
+    const root = createRoot(rootElement);
+    console.log("main.tsx: Created root, attempting render");
+    root.render(<TestApp />);
+    console.log("main.tsx: Render called");
   } else {
-    createRoot(root).render(<App />);
-    console.log("main.tsx: Render call finished");
+    console.error("main.tsx: No root element found");
   }
 } catch (e) {
-  console.error("main.tsx: Error during render", e);
+  console.error("main.tsx: Global catch:", e);
 }
