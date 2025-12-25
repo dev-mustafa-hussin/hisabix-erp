@@ -221,8 +221,11 @@ const menuItems: MenuItem[] = [
 
 const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
   const location = useLocation();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { isCollapsed: contextIsCollapsed, toggleSidebar } = useSidebar();
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+
+  // Force expanded state on mobile (when onClose is present)
+  const isCollapsed = onClose ? false : contextIsCollapsed;
 
   const toggleSubmenu = (label: string) => {
     if (isCollapsed) return; // Don't expand in collapsed mode
