@@ -43,7 +43,16 @@ export const SidebarProvider = ({
 export const useSidebar = () => {
   const context = useContext(SidebarContext);
   if (context === undefined) {
-    throw new Error("useSidebar must be used within a SidebarProvider");
+    console.error(
+      "useSidebar called outside of SidebarProvider. Returning fallback."
+    );
+    return {
+      isCollapsed: false,
+      toggleSidebar: () =>
+        console.warn("toggleSidebar called outside provider"),
+      setIsCollapsed: () =>
+        console.warn("setIsCollapsed called outside provider"),
+    };
   }
   return context;
 };
