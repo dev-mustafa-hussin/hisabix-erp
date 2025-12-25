@@ -5,24 +5,16 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-// Group A: Enabled
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import Products from "./pages/Products";
-
-// Group B: Commented Out (Suspected Zone)
-/*
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
 import Receivables from "./pages/Receivables";
-*/
-
-// Batch 2: Commented Out
-/*
 import CompanySettings from "./pages/CompanySettings";
 import NotificationSettings from "./pages/NotificationSettings";
 import NotificationLogs from "./pages/NotificationLogs";
@@ -34,12 +26,11 @@ import AcceptInvitation from "./pages/AcceptInvitation";
 import ProfileSettings from "./pages/ProfileSettings";
 import OnlineStoreSettings from "./pages/OnlineStoreSettings";
 import NotFound from "./pages/NotFound";
-*/
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  console.log("App: Rendering started (Group A Active)");
+  console.log("App: Rendering fully restored version");
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -49,8 +40,11 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route
+                  path="/accept-invitation"
+                  element={<AcceptInvitation />}
+                />
 
-                {/* Group A Routes */}
                 <Route
                   path="/dashboard"
                   element={
@@ -75,25 +69,120 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-
-                {/* Group B Routes (Commented) */}
-                {/*
-                  <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
-                  <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
-                  <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
-                  <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-                  <Route path="/receivables" element={<ProtectedRoute><Receivables /></ProtectedRoute>} />
-                  */}
-
                 <Route
-                  path="*"
+                  path="/inventory"
                   element={
-                    <div className="p-20 text-center text-red-500">
-                      Page Not Found (Group B or Batch 2 might be commented out)
-                      - Path: {window.location.pathname}
-                    </div>
+                    <ProtectedRoute>
+                      <Inventory />
+                    </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/sales"
+                  element={
+                    <ProtectedRoute>
+                      <Sales />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/invoices"
+                  element={
+                    <ProtectedRoute>
+                      <Invoices />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <ProtectedRoute>
+                      <Reports />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/receivables"
+                  element={
+                    <ProtectedRoute>
+                      <Receivables />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/company-settings"
+                  element={
+                    <ProtectedRoute>
+                      <CompanySettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/notification-settings"
+                  element={
+                    <ProtectedRoute>
+                      <NotificationSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/notification-logs"
+                  element={
+                    <ProtectedRoute>
+                      <NotificationLogs />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/notifications-dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <NotificationsDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/inventory-report"
+                  element={
+                    <ProtectedRoute>
+                      <InventoryReport />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/user-management"
+                  element={
+                    <ProtectedRoute>
+                      <UserManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/audit-logs"
+                  element={
+                    <ProtectedRoute>
+                      <AuditLogs />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile-settings"
+                  element={
+                    <ProtectedRoute>
+                      <ProfileSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/online-store-settings"
+                  element={
+                    <ProtectedRoute>
+                      <OnlineStoreSettings />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
           </AuthProvider>
