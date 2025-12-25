@@ -42,7 +42,17 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { icon: Home, label: "الرئيسية", href: "/dashboard" },
-  { icon: UserPlus, label: "إدارة المستخدمين", href: "/user-management" },
+  {
+    icon: UserPlus,
+    label: "إدارة المستخدمين",
+    href: "#",
+    hasSubmenu: true,
+    submenu: [
+      { label: "المستخدمين", href: "/user-management/users" },
+      { label: "الصلاحيات", href: "/user-management/permissions" },
+      { label: "المندوبين", href: "/user-management/delegates" },
+    ],
+  },
   { icon: ClipboardList, label: "سجل التدقيق", href: "/audit-logs" },
   { icon: Users, label: "العملاء", href: "/customers" },
   { icon: Package, label: "المنتجات", href: "/products" },

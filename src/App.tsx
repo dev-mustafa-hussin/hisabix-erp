@@ -20,7 +20,9 @@ import NotificationSettings from "./pages/NotificationSettings";
 import NotificationLogs from "./pages/NotificationLogs";
 import NotificationsDashboard from "./pages/NotificationsDashboard";
 import InventoryReport from "./pages/InventoryReport";
-import UserManagement from "./pages/UserManagement";
+import Users from "./pages/user-management/Users";
+import Permissions from "./pages/user-management/Permissions";
+import Delegates from "./pages/user-management/Delegates";
 import AuditLogs from "./pages/AuditLogs";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import ProfileSettings from "./pages/ProfileSettings";
@@ -150,10 +152,26 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/user-management"
+                  path="/user-management/users"
                   element={
                     <ProtectedRoute>
-                      <UserManagement />
+                      <Users />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/user-management/permissions"
+                  element={
+                    <ProtectedRoute>
+                      <Permissions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/user-management/delegates"
+                  element={
+                    <ProtectedRoute>
+                      <Delegates />
                     </ProtectedRoute>
                   }
                 />

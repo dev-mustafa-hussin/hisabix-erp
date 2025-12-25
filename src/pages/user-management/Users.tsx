@@ -46,7 +46,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -54,7 +53,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import {
-  Users,
+  Users as UsersIcon,
   UserPlus,
   Shield,
   Crown,
@@ -106,16 +105,16 @@ const roleLabels: Record<
   moderator: {
     label: "مشرف",
     color: "bg-blue-100 text-blue-800 border-blue-200",
-    icon: <Users className="w-3 h-3" />,
+    icon: <UsersIcon className="w-3 h-3" />,
   },
   user: {
     label: "مستخدم",
     color: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: <Users className="w-3 h-3" />,
+    icon: <UsersIcon className="w-3 h-3" />,
   },
 };
 
-const UserManagement = () => {
+const Users = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -466,7 +465,7 @@ const UserManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                  <Users className="w-7 h-7 text-primary" />
+                  <UsersIcon className="w-7 h-7 text-primary" />
                   إدارة المستخدمين
                 </h1>
                 <p className="text-muted-foreground mt-1">
@@ -475,71 +474,118 @@ const UserManagement = () => {
               </div>
 
               {(isOwner || isAdmin) && (
-                <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2">
-                      <UserPlus className="w-4 h-4" />
-                      دعوة مستخدم
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle className="text-right">
-                        دعوة مستخدم جديد
-                      </DialogTitle>
-                      <DialogDescription className="text-right">
-                        أضف مستخدم جديد إلى فريق العمل
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label className="text-right block">
-                          البريد الإلكتروني
-                        </Label>
-                        <Input
-                          type="email"
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                          placeholder="user@example.com"
-                          className="text-left"
-                          dir="ltr"
-                        />
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={handleExportUsers}>
+                    <Download className="w-4 h-4 ml-2" />
+                    تصدير Excel
+                  </Button>
+                  <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2">
+                        <UserPlus className="w-4 h-4" />
+                        دعوة مستخدم
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle className="text-right">
+                          دعوة مستخدم جديد
+                        </DialogTitle>
+                        <DialogDescription className="text-right">
+                          أضف مستخدم جديد إلى فريق العمل
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label className="text-right block">
+                            البريد الإلكتروني
+                          </Label>
+                          <Input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            placeholder="user@example.com"
+                            className="text-left"
+                            dir="ltr"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-right block">الصلاحية</Label>
+                          <Select
+                            value={inviteRole}
+                            onValueChange={(v) => setInviteRole(v as any)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">مستخدم</SelectItem>
+                              <SelectItem value="moderator">مشرف</SelectItem>
+                              <SelectItem value="admin">مدير</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-right block">الصلاحية</Label>
-                        <Select
-                          value={inviteRole}
-                          onValueChange={(v) => setInviteRole(v as any)}
+                      <DialogFooter className="gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setInviteOpen(false)}
                         >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="user">مستخدم</SelectItem>
-                            <SelectItem value="moderator">مشرف</SelectItem>
-                            <SelectItem value="admin">مدير</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <DialogFooter className="gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setInviteOpen(false)}
-                      >
-                        إلغاء
-                      </Button>
-                      <Button onClick={handleInviteUser} disabled={inviting}>
-                        {inviting && (
-                          <Loader2 className="w-4 h-4 animate-spin ml-2" />
-                        )}
-                        إرسال الدعوة
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                          إلغاء
+                        </Button>
+                        <Button onClick={handleInviteUser} disabled={inviting}>
+                          {inviting && (
+                            <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                          )}
+                          إرسال الدعوة
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               )}
             </div>
+
+            {/* Invitations Alert */}
+            {invitations.length > 0 && (
+              <Card className="border-amber-200 bg-amber-50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg text-amber-800 flex items-center gap-2">
+                    <Mail className="w-5 h-5" />
+                    دعوات معلقة ({invitations.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {invitations.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="flex items-center justify-between bg-white/60 p-2 rounded"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{inv.email}</span>
+                          <Badge variant="outline">{inv.role}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {format(
+                              new Date(inv.created_at),
+                              "dd MMM yyyy HH:mm"
+                            )}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive h-8"
+                          onClick={() => handleCancelInvitation(inv.id)}
+                        >
+                          إلغاء
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -547,7 +593,7 @@ const UserManagement = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="p-2 bg-primary/10 rounded-lg">
-                      <Users className="w-5 h-5 text-primary" />
+                      <UsersIcon className="w-5 h-5 text-primary" />
                     </div>
                     <div className="text-left">
                       <p className="text-2xl font-bold">
@@ -579,7 +625,7 @@ const UserManagement = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="p-2 bg-blue-100 rounded-lg">
-                      <Users className="w-5 h-5 text-blue-600" />
+                      <UsersIcon className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="text-left">
                       <p className="text-2xl font-bold">
@@ -798,7 +844,7 @@ const UserManagement = () => {
                               {companyUser.user_id === user?.id &&
                                 !companyUser.is_owner && (
                                   <span className="text-sm text-muted-foreground">
-                                    -
+                                    (أنت)
                                   </span>
                                 )}
                             </div>
@@ -811,66 +857,10 @@ const UserManagement = () => {
 
                 {companyUsers.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
-                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <UsersIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>لا يوجد أعضاء في الفريق</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Permissions Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-primary" />
-                  شرح الصلاحيات
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-lg bg-red-50 border border-red-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Shield className="w-5 h-5 text-red-600" />
-                      <h3 className="font-semibold text-red-800">
-                        مدير (Admin)
-                      </h3>
-                    </div>
-                    <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
-                      <li>الوصول الكامل لجميع الميزات</li>
-                      <li>إدارة المستخدمين والصلاحيات</li>
-                      <li>تعديل إعدادات الشركة</li>
-                      <li>حذف وتعديل جميع البيانات</li>
-                    </ul>
-                  </div>
-                  <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Users className="w-5 h-5 text-blue-600" />
-                      <h3 className="font-semibold text-blue-800">
-                        مشرف (Moderator)
-                      </h3>
-                    </div>
-                    <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
-                      <li>إنشاء وتعديل الفواتير والمبيعات</li>
-                      <li>إدارة المنتجات والمخزون</li>
-                      <li>عرض التقارير</li>
-                      <li>لا يمكنه إدارة المستخدمين</li>
-                    </ul>
-                  </div>
-                  <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Users className="w-5 h-5 text-gray-600" />
-                      <h3 className="font-semibold text-gray-800">
-                        مستخدم (User)
-                      </h3>
-                    </div>
-                    <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
-                      <li>عرض البيانات فقط</li>
-                      <li>إنشاء مبيعات جديدة</li>
-                      <li>لا يمكنه التعديل أو الحذف</li>
-                      <li>وصول محدود للتقارير</li>
-                    </ul>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>
@@ -950,4 +940,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default Users;
