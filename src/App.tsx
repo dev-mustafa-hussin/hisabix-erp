@@ -13,7 +13,18 @@ import Suppliers from "./pages/contacts/Suppliers";
 import CustomerGroups from "./pages/contacts/CustomerGroups";
 import ImportContacts from "./pages/contacts/ImportContacts";
 import ContactsMap from "./pages/contacts/ContactsMap";
-import Products from "./pages/Products";
+import Products from "./pages/products/ProductList";
+import AddProduct from "./pages/products/AddProduct";
+import UpdatePrice from "./pages/products/UpdatePrice";
+import PrintLabels from "./pages/products/PrintLabels";
+import Variations from "./pages/products/Variations";
+import ImportProducts from "./pages/products/ImportProducts";
+import ImportOpeningStock from "./pages/products/ImportOpeningStock";
+import SellingPriceGroups from "./pages/products/SellingPriceGroups";
+import Units from "./pages/products/Units";
+import Categories from "./pages/products/Categories";
+import Brands from "./pages/products/Brands";
+import Warranties from "./pages/products/Warranties";
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
 import Invoices from "./pages/Invoices";
@@ -104,6 +115,94 @@ const App = () => {
                   element={
                     <ProtectedRoute>
                       <Products />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/add"
+                  element={
+                    <ProtectedRoute>
+                      <AddProduct />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/update-price"
+                  element={
+                    <ProtectedRoute>
+                      <UpdatePrice />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/labels"
+                  element={
+                    <ProtectedRoute>
+                      <PrintLabels />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/variations"
+                  element={
+                    <ProtectedRoute>
+                      <Variations />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/import"
+                  element={
+                    <ProtectedRoute>
+                      <ImportProducts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/opening-stock"
+                  element={
+                    <ProtectedRoute>
+                      <ImportOpeningStock />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/selling-price-groups"
+                  element={
+                    <ProtectedRoute>
+                      <SellingPriceGroups />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/units"
+                  element={
+                    <ProtectedRoute>
+                      <Units />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/categories"
+                  element={
+                    <ProtectedRoute>
+                      <Categories />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/brands"
+                  element={
+                    <ProtectedRoute>
+                      <Brands />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/products/warranties"
+                  element={
+                    <ProtectedRoute>
+                      <Warranties />
                     </ProtectedRoute>
                   }
                 />
