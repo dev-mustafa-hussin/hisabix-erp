@@ -25,7 +25,7 @@ import Units from "./pages/products/Units";
 import Categories from "./pages/products/Categories";
 import Brands from "./pages/products/Brands";
 import Warranties from "./pages/products/Warranties";
-import Inventory from "./pages/Inventory";
+
 import PurchaseList from "./pages/purchases/PurchaseList";
 import AddPurchase from "./pages/purchases/AddPurchase";
 import PurchaseReturns from "./pages/purchases/PurchaseReturns";
@@ -77,18 +77,9 @@ import SalesReport from "./pages/reports/SalesReport";
 import ExpenseReport from "./pages/reports/ExpenseReport";
 import ActivityLog from "./pages/reports/ActivityLog";
 
-import Invoices from "./pages/Invoices";
-import Reports from "./pages/Reports";
-import Receivables from "./pages/Receivables";
-import CompanySettings from "./pages/CompanySettings";
-import NotificationSettings from "./pages/NotificationSettings";
-import NotificationLogs from "./pages/NotificationLogs";
-import NotificationsDashboard from "./pages/NotificationsDashboard";
-import InventoryReport from "./pages/InventoryReport";
 import Users from "./pages/user-management/Users";
 import Permissions from "./pages/user-management/Permissions";
 import Delegates from "./pages/user-management/Delegates";
-import AuditLogs from "./pages/AuditLogs";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import ProfileSettings from "./pages/ProfileSettings";
 import OnlineStoreSettings from "./pages/OnlineStoreSettings";
@@ -256,14 +247,7 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/inventory"
-                  element={
-                    <ProtectedRoute>
-                      <Inventory />
-                    </ProtectedRoute>
-                  }
-                />
+
                 <Route
                   path="/sales"
                   element={
@@ -445,14 +429,6 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/invoices"
-                  element={
-                    <ProtectedRoute>
-                      <Invoices />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/checks"
                   element={
                     <ProtectedRoute>
@@ -543,126 +519,6 @@ const App = () => {
                   }
                 />
 
-                <Route
-                  path="/reports/profit-loss"
-                  element={
-                    <ProtectedRoute>
-                      <ProfitLoss />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports/purchases-sales"
-                  element={
-                    <ProtectedRoute>
-                      <PurchasesSales />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports/tax"
-                  element={
-                    <ProtectedRoute>
-                      <TaxReport />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports/contacts"
-                  element={
-                    <ProtectedRoute>
-                      <ContactReport />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports/inventory"
-                  element={
-                    <ProtectedRoute>
-                      <InventoryReport />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports/trending"
-                  element={
-                    <ProtectedRoute>
-                      <TrendingProducts />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports/sales"
-                  element={
-                    <ProtectedRoute>
-                      <SalesReport />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports/expenses"
-                  element={
-                    <ProtectedRoute>
-                      <ExpenseReport />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/reports/activity"
-                  element={
-                    <ProtectedRoute>
-                      <ActivityLog />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/receivables"
-                  element={
-                    <ProtectedRoute>
-                      <Receivables />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/company-settings"
-                  element={
-                    <ProtectedRoute>
-                      <CompanySettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notification-settings"
-                  element={
-                    <ProtectedRoute>
-                      <NotificationSettings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notification-logs"
-                  element={
-                    <ProtectedRoute>
-                      <NotificationLogs />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notifications-dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <NotificationsDashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/inventory-report"
-                  element={
-                    <ProtectedRoute>
-                      <InventoryReport />
-                    </ProtectedRoute>
-                  }
-                />
                 <Route
                   path="/user-management/users"
                   element={
