@@ -66,6 +66,7 @@ import BarcodeSettings from "./pages/settings/BarcodeSettings";
 import Printers from "./pages/settings/Printers";
 import TaxRates from "./pages/settings/TaxRates";
 import Subscription from "./pages/settings/Subscription";
+import CompanySettings from "./pages/CompanySettings";
 
 import ProfitLoss from "./pages/reports/ProfitLoss";
 import PurchasesSales from "./pages/reports/PurchasesSales";
