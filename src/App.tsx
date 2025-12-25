@@ -26,7 +26,33 @@ import Categories from "./pages/products/Categories";
 import Brands from "./pages/products/Brands";
 import Warranties from "./pages/products/Warranties";
 import Inventory from "./pages/Inventory";
-import Sales from "./pages/Sales";
+import PurchaseList from "./pages/purchases/PurchaseList";
+import AddPurchase from "./pages/purchases/AddPurchase";
+import PurchaseReturns from "./pages/purchases/PurchaseReturns";
+
+import SalesList from "./pages/sales/SalesList";
+import AddSale from "./pages/sales/AddSale";
+import POSList from "./pages/sales/POSList";
+import POS from "./pages/sales/POS";
+import AddDraft from "./pages/sales/AddDraft";
+import DraftList from "./pages/sales/DraftList";
+import AddQuotation from "./pages/sales/AddQuotation";
+import QuotationList from "./pages/sales/QuotationList";
+import SalesReturnList from "./pages/sales/SalesReturnList";
+import Shipments from "./pages/sales/Shipments";
+import Discounts from "./pages/sales/Discounts";
+import ImportSales from "./pages/sales/ImportSales";
+
+import TransferList from "./pages/stock-transfers/TransferList";
+import AddTransfer from "./pages/stock-transfers/AddTransfer";
+
+import DamagedStockList from "./pages/damaged-stock/DamagedStockList";
+import AddDamagedStock from "./pages/damaged-stock/AddDamagedStock";
+
+import ExpenseList from "./pages/expenses/ExpenseList";
+import AddExpense from "./pages/expenses/AddExpense";
+import ExpenseCategories from "./pages/expenses/ExpenseCategories";
+
 import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
 import Receivables from "./pages/Receivables";
@@ -218,7 +244,179 @@ const App = () => {
                   path="/sales"
                   element={
                     <ProtectedRoute>
-                      <Sales />
+                      <SalesList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/add"
+                  element={
+                    <ProtectedRoute>
+                      <AddSale />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/pos-list"
+                  element={
+                    <ProtectedRoute>
+                      <POSList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/pos"
+                  element={
+                    <ProtectedRoute>
+                      <POS />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/add-draft"
+                  element={
+                    <ProtectedRoute>
+                      <AddDraft />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/drafts"
+                  element={
+                    <ProtectedRoute>
+                      <DraftList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/add-quotation"
+                  element={
+                    <ProtectedRoute>
+                      <AddQuotation />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/quotations"
+                  element={
+                    <ProtectedRoute>
+                      <QuotationList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/returns"
+                  element={
+                    <ProtectedRoute>
+                      <SalesReturnList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/shipments"
+                  element={
+                    <ProtectedRoute>
+                      <Shipments />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/discounts"
+                  element={
+                    <ProtectedRoute>
+                      <Discounts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/sales/import"
+                  element={
+                    <ProtectedRoute>
+                      <ImportSales />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/purchases"
+                  element={
+                    <ProtectedRoute>
+                      <PurchaseList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/purchases/add"
+                  element={
+                    <ProtectedRoute>
+                      <AddPurchase />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/purchases/returns"
+                  element={
+                    <ProtectedRoute>
+                      <PurchaseReturns />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/stock-transfers"
+                  element={
+                    <ProtectedRoute>
+                      <TransferList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/stock-transfers/add"
+                  element={
+                    <ProtectedRoute>
+                      <AddTransfer />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/damaged-stock"
+                  element={
+                    <ProtectedRoute>
+                      <DamagedStockList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/damaged-stock/add"
+                  element={
+                    <ProtectedRoute>
+                      <AddDamagedStock />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/expenses"
+                  element={
+                    <ProtectedRoute>
+                      <ExpenseList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/expenses/add"
+                  element={
+                    <ProtectedRoute>
+                      <AddExpense />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/expenses/categories"
+                  element={
+                    <ProtectedRoute>
+                      <ExpenseCategories />
                     </ProtectedRoute>
                   }
                 />
