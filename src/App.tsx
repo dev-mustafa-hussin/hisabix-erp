@@ -86,6 +86,8 @@ import ProfileSettings from "./pages/ProfileSettings";
 import OnlineStoreSettings from "./pages/OnlineStoreSettings";
 import NotFound from "./pages/NotFound";
 
+import { Toaster } from "@/components/ui/toaster";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -573,6 +575,7 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
+            <Toaster />
           </AuthProvider>
         </SidebarProvider>
       </ThemeProvider>

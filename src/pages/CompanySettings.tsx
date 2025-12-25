@@ -280,39 +280,42 @@ const CompanySettings = () => {
         if (error) throw error;
         toast({ title: "تم الحفظ", description: "تم تحديث الإعدادات بنجاح" });
       } else {
-        // Create New & Link
-        const { data: newCompany, error: createError } = await supabase
-          .from("companies")
-          .insert(payload)
-          .select()
-          .single();
+        // Create New & Link via RPC (Safe)
+        const { data: newCompanyId, error: createError } = await supabase.rpc(
+          "create_company_setting",
+          {
+            _name: formData.name,
+            _start_date: formData.start_date?.toISOString(),
+            _currency: formData.currency,
+            _default_profit_percent: formData.default_profit_percent,
+            _currency_symbol_placement: formData.currency_symbol_placement,
+            _timezone: formData.timezone,
+            _financial_year_start: formData.financial_year_start,
+            _stock_accounting_method: formData.stock_accounting_method,
+            _transaction_edit_days: formData.transaction_edit_days,
+            _date_format: formData.date_format,
+            _time_format: formData.time_format,
+            _currency_precision: formData.currency_precision,
+            _quantity_precision: formData.quantity_precision,
+            _logo_url: formData.logo_url,
+          }
+        );
 
         if (createError) throw createError;
 
-        if (user?.id && newCompany) {
-          const { error: linkError } = await supabase
-            .from("company_users")
-            .insert({
-              company_id: newCompany.id,
-              user_id: user.id,
-              role: "admin",
-              is_owner: true,
-            });
-
-          if (linkError) throw linkError;
-
-          // Ensure profile exists
-          await supabase.from("profiles").upsert({
-            user_id: user.id,
-            full_name: user.email?.split("@")[0] || "Admin",
-            username: user.email?.split("@")[0] || "admin",
-          });
-
-          setFormData((prev) => ({ ...prev, id: newCompany.id }));
+        if (newCompanyId) {
+          setFormData((prev) => ({ ...prev, id: newCompanyId }));
           toast({
-            title: "تم الإنشاء",
-            description: "تم إنشاء الشركة وربط الحساب بنجاح",
+            title: "تم بنجاح",
+            description: "تم إنشاء ملف الشركة وربط حسابك بنجاح!",
+            variant: "default", // Green-ish usually default or specific success
+            className: "bg-green-600 text-white border-none",
           });
+
+          // Force reload after 1.5s to refresh context
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         }
       }
     } catch (error: any) {
