@@ -343,21 +343,73 @@ const CompanySettings = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 h-[calc(100vh-80px)] overflow-hidden flex flex-col">
+      <div className="p-4 md:p-8 min-h-[calc(100vh-80px)] flex flex-col items-start gap-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">إعدادات الشركة</h1>
-          {loading && <Loader2 className="animate-spin" />}
+        <div className="w-full flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-[#3b82f6] bg-clip-text text-transparent">
+              إعدادات الشركة
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              إدارة ملف الشركة، السياسات المالية، والإعدادات العامة
+            </p>
+          </div>
+          {loading && <Loader2 className="animate-spin text-primary w-6 h-6" />}
         </div>
 
-        <div className="flex gap-6 h-full">
-          {/* Content Area (Left Side in LTR, Right in RTL - standard layout) */}
-          <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar pr-2">
+        <div className="w-full flex flex-col lg:flex-row gap-8 items-start">
+          {/* Sidebar (Vertical Tabs) - First Child = Right in RTL */}
+          <div className="w-full lg:w-[280px] shrink-0 space-y-2 sticky top-6">
+            <Card className="border-0 shadow-lg bg-card overflow-hidden">
+              <div className="flex flex-col">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={cn(
+                        "group relative w-full flex items-center gap-3 px-5 py-4 text-sm font-medium transition-all duration-300 border-b border-border/50 last:border-0",
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      )}
+                    >
+                      {isActive && (
+                        <div className="absolute right-0 top-0 bottom-0 w-1 bg-primary rounded-l-full" />
+                      )}
+                      <Icon
+                        className={cn(
+                          "w-5 h-5 transition-colors",
+                          isActive
+                            ? "text-primary"
+                            : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      />
+                      <span className="flex-1 text-right">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+
+          {/* Main Content Form - Second Child = Left in RTL */}
+          <div className="flex-1 w-full min-w-0">
             <form onSubmit={handleSubmit}>
-              <Card className="border-none shadow-sm">
-                <CardContent className="p-6 space-y-6">
-                  {/* Row 1 */}
-                  <div>
+              <Card className="border-0 shadow-lg bg-card overflow-hidden">
+                <CardContent className="p-8 space-y-8">
+                  {/* Section Title */}
+                  <div className="pb-4 border-b border-border/50">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                      <Building2 className="w-5 h-5 text-primary" />
+                      بيانات النشاط الأساسية
+                    </h2>
+                  </div>
+
+                  {/* Row 1: Name */}
+                  <div className="grid gap-2">
                     <LabelWithIcon label="اسم النشاط" required />
                     <Input
                       value={formData.name}
@@ -367,33 +419,33 @@ const CompanySettings = () => {
                           name: e.target.value,
                         }))
                       }
-                      placeholder="اسم النشاط"
-                      className="font-bold"
+                      placeholder="أدخل اسم الشركة الرسمي"
+                      className="h-12 text-lg font-medium bg-background border-input hover:border-primary/50 focus:border-primary transition-colors"
                     />
                   </div>
 
-                  {/* Row 2 */}
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
+                  {/* Row 2: Date & Profit */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid gap-2">
                       <LabelWithIcon label="تاريخ البدء" />
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant={"outline"}
                             className={cn(
-                              "w-full justify-start text-left font-normal bg-muted/20",
+                              "w-full h-12 justify-start text-left font-normal bg-background hover:bg-muted/50 border-input",
                               !formData.start_date && "text-muted-foreground"
                             )}
                           >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            <CalendarIcon className="mr-3 h-5 w-5 text-muted-foreground" />
                             {formData.start_date ? (
                               format(formData.start_date, "MM/dd/yyyy")
                             ) : (
-                              <span>Pick a date</span>
+                              <span>اختر تاريخ</span>
                             )}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
+                        <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
                             selected={formData.start_date}
@@ -408,8 +460,8 @@ const CompanySettings = () => {
                         </PopoverContent>
                       </Popover>
                     </div>
-                    <div className="relative">
-                      <LabelWithIcon label="نسبة الربح الافتراضي" />
+                    <div className="grid gap-2">
+                      <LabelWithIcon label="نسبة الربح الافتراضي (%)" />
                       <div className="relative">
                         <Input
                           type="number"
@@ -422,41 +474,43 @@ const CompanySettings = () => {
                               ),
                             }))
                           }
-                          className="pl-10"
+                          className="pl-12 h-12 bg-background text-lg"
                         />
-                        <PlusCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground cursor-pointer hover:text-primary transition-colors" />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/50 font-bold">
+                          %
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Row 3 */}
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <LabelWithIcon label="العملة" />
+                  {/* Row 3: Currency */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid gap-2">
+                      <LabelWithIcon label="العملة الأساسية" />
                       <Select
                         value={formData.currency}
                         onValueChange={(v) =>
                           setFormData((prev) => ({ ...prev, currency: v }))
                         }
                       >
-                        <SelectTrigger className="bg-muted/20">
+                        <SelectTrigger className="h-12 bg-background">
                           <SelectValue placeholder="اختر العملة" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="EGP">
-                            Egypt - Pounds(EGP)
+                            الجنيه المصري (EGP)
                           </SelectItem>
                           <SelectItem value="USD">
-                            USA - Dollars(USD)
+                            الدولار الأمريكي (USD)
                           </SelectItem>
                           <SelectItem value="SAR">
-                            Saudi Arabia - Riyal(SAR)
+                            الريال السعودي (SAR)
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <LabelWithIcon label="تحديد مكان رمز العملة" />
+                    <div className="grid gap-2">
+                      <LabelWithIcon label="موضع العملة" />
                       <Select
                         value={formData.currency_symbol_placement}
                         onValueChange={(v) =>
@@ -466,19 +520,23 @@ const CompanySettings = () => {
                           }))
                         }
                       >
-                        <SelectTrigger className="bg-muted/20">
+                        <SelectTrigger className="h-12 bg-background">
                           <SelectValue placeholder="اختر" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="before">قبل السعر</SelectItem>
-                          <SelectItem value="after">بعد السعر</SelectItem>
+                          <SelectItem value="before">
+                            يمين السعر (100 $)
+                          </SelectItem>
+                          <SelectItem value="after">
+                            يسار السعر ($ 100)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  {/* Row 3.5: Timezone (Full Width in screenshot row 3, assuming) */}
-                  <div>
+                  {/* Row 3.5: Timezone */}
+                  <div className="grid gap-2">
                     <LabelWithIcon label="المنطقة الزمنية" />
                     <Select
                       value={formData.timezone}
@@ -486,64 +544,80 @@ const CompanySettings = () => {
                         setFormData((prev) => ({ ...prev, timezone: v }))
                       }
                     >
-                      <SelectTrigger className="bg-muted/20">
-                        <SelectValue placeholder="اختر المنطقة" />
+                      <SelectTrigger className="h-12 bg-background">
+                        <Globe className="w-4 h-4 path-primary ml-2 text-muted-foreground" />
+                        <SelectValue placeholder="اختر المنطقة الزمنية" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Africa/Cairo">
-                          Africa/Cairo
+                          القاهرة - مصر (Africa/Cairo)
                         </SelectItem>
-                        <SelectItem value="Asia/Riyadh">Asia/Riyadh</SelectItem>
-                        <SelectItem value="Asia/Dubai">Asia/Dubai</SelectItem>
+                        <SelectItem value="Asia/Riyadh">
+                          الرياض - السعودية (Asia/Riyadh)
+                        </SelectItem>
+                        <SelectItem value="Asia/Dubai">
+                          دبي - الإمارات (Asia/Dubai)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Row 4: Logo */}
-                  <div>
-                    <LabelWithIcon label="تحميل الشعار" />
-                    <div className="flex gap-2">
+                  {/* Separator */}
+                  <div className="h-px bg-border/50 my-6" />
+
+                  {/* Row 4: Logo Upload - Enhanced UI */}
+                  <div className="bg-muted/30 border border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors cursor-pointer relative group">
+                    <div className="absolute inset-0 z-10 cursor-pointer">
                       <Input
-                        readOnly
-                        placeholder={
-                          formData.logo_url
-                            ? "تم اختيار ملف"
-                            : "لم يتم اختيار ملف"
-                        }
-                        className="bg-muted/20"
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="w-full h-full opacity-0 cursor-pointer"
                       />
-                      <div className="relative">
-                        <Input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleLogoUpload}
-                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                        />
-                        <Button
-                          type="button"
-                          className="bg-blue-600 hover:bg-blue-700 min-w-[100px]"
-                        >
-                          تصفح...
-                        </Button>
-                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      سيتم استبدال الشعار السابق (إن وجد)
-                    </p>
-                    {formData.logo_url && (
-                      <img
-                        src={formData.logo_url}
-                        alt="Logo"
-                        className="h-16 mt-2 object-contain"
-                      />
+
+                    {formData.logo_url ? (
+                      <div className="relative w-32 h-32 mb-4 bg-background rounded-lg shadow-sm border p-2">
+                        <img
+                          src={formData.logo_url}
+                          alt="Logo"
+                          className="w-full h-full object-contain"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                          <Upload className="w-8 h-8 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <ImageIcon className="w-10 h-10 text-muted-foreground" />
+                      </div>
                     )}
+
+                    <h3 className="text-lg font-medium text-foreground mb-1">
+                      {formData.logo_url
+                        ? "تغيير شعار الشركة"
+                        : "رفع شعار الشركة"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                      اضغط للرفع أو اسحب الصورة هنا. (PNG, JPG, الحد الأقصى 2MB)
+                    </p>
                   </div>
 
-                  {/* Row 5 */}
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <LabelWithIcon label="تاريخ بداية السنة المالية" />
+                  {/* Separator */}
+                  <div className="h-px bg-border/50 my-6" />
+
+                  {/* Advanced Settings Title */}
+                  <div className="pb-2">
+                    <h2 className="text-lg font-semibold flex items-center gap-2 text-foreground/80">
+                      إعدادات متقدمة
+                    </h2>
+                  </div>
+
+                  {/* Financial Year & Accounting */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid gap-2">
+                      <LabelWithIcon label="بداية السنة المالية" />
                       <Select
                         value={formData.financial_year_start}
                         onValueChange={(v) =>
@@ -553,18 +627,19 @@ const CompanySettings = () => {
                           }))
                         }
                       >
-                        <SelectTrigger className="bg-muted/20">
+                        <SelectTrigger className="h-12 bg-background">
                           <SelectValue placeholder="الشهر" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="January">يناير</SelectItem>
-                          <SelectItem value="February">فبراير</SelectItem>
-                          {/* Add others as needed */}
+                          <SelectItem value="January">
+                            يناير (January)
+                          </SelectItem>
+                          <SelectItem value="July">يوليو (July)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <LabelWithIcon label="طريقة المحاسبة" />
+                    <div className="grid gap-2">
+                      <LabelWithIcon label="طريقة احتساب المخزون" />
                       <Select
                         value={formData.stock_accounting_method}
                         onValueChange={(v) =>
@@ -574,24 +649,24 @@ const CompanySettings = () => {
                           }))
                         }
                       >
-                        <SelectTrigger className="bg-muted/20">
+                        <SelectTrigger className="h-12 bg-background">
                           <SelectValue placeholder="الطريقة" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="FIFO">
-                            (أول دخول أول خروج) FIFO
+                            الوارد أولاً يصرف أولاً (FIFO)
                           </SelectItem>
                           <SelectItem value="LIFO">
-                            (آخر دخول أول خروج) LIFO
+                            الوارد أخيراً يصرف أولاً (LIFO)
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  {/* Row 6 */}
-                  <div>
-                    <LabelWithIcon label="تغيير أيام المعاملة" />
+                  {/* Transaction Edit Days */}
+                  <div className="grid gap-2">
+                    <LabelWithIcon label="فترة السماح بتعديل المعاملات (أيام)" />
                     <div className="relative">
                       <Input
                         type="number"
@@ -602,16 +677,18 @@ const CompanySettings = () => {
                             transaction_edit_days: parseInt(e.target.value),
                           }))
                         }
-                        className="bg-muted/20 pr-10"
+                        className="h-12 bg-background"
                         dir="ltr"
                       />
-                      <Edit className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                        يوم
+                      </div>
                     </div>
                   </div>
 
-                  {/* Row 7 */}
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
+                  {/* Date Format */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid gap-2">
                       <LabelWithIcon label="صيغة التاريخ" />
                       <Select
                         value={formData.date_format}
@@ -619,16 +696,20 @@ const CompanySettings = () => {
                           setFormData((prev) => ({ ...prev, date_format: v }))
                         }
                       >
-                        <SelectTrigger className="bg-muted/20">
+                        <SelectTrigger className="h-12 bg-background">
                           <SelectValue placeholder="الصيغة" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="mm/dd/yyyy">mm/dd/yyyy</SelectItem>
-                          <SelectItem value="dd/mm/yyyy">dd/mm/yyyy</SelectItem>
+                          <SelectItem value="mm/dd/yyyy">
+                            الشهر/اليوم/السنة (MM/DD/YYYY)
+                          </SelectItem>
+                          <SelectItem value="dd/mm/yyyy">
+                            اليوم/الشهر/السنة (DD/MM/YYYY)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
+                    <div className="grid gap-2">
                       <LabelWithIcon label="تنسيق الوقت" />
                       <Select
                         value={formData.time_format}
@@ -636,21 +717,23 @@ const CompanySettings = () => {
                           setFormData((prev) => ({ ...prev, time_format: v }))
                         }
                       >
-                        <SelectTrigger className="bg-muted/20">
+                        <SelectTrigger className="h-12 bg-background">
                           <SelectValue placeholder="التنسيق" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="24h">24 ساعة</SelectItem>
-                          <SelectItem value="12h">12 ساعة</SelectItem>
+                          <SelectItem value="24h">نظام 24 ساعة</SelectItem>
+                          <SelectItem value="12h">
+                            نظام 12 ساعة (م/ص)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
-                  {/* Row 8 */}
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <LabelWithIcon label=":Currency Precision" />
+                  {/* Precisions */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid gap-2">
+                      <LabelWithIcon label="الكسور العشرية للعملة" />
                       <Select
                         value={formData.currency_precision.toString()}
                         onValueChange={(v) =>
@@ -660,18 +743,18 @@ const CompanySettings = () => {
                           }))
                         }
                       >
-                        <SelectTrigger className="bg-muted/20">
-                          <SelectValue placeholder="Precision" />
+                        <SelectTrigger className="h-12 bg-background">
+                          <SelectValue placeholder="عدد الخانات" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="2">2</SelectItem>
-                          <SelectItem value="3">3</SelectItem>
-                          <SelectItem value="4">4</SelectItem>
+                          <SelectItem value="0">بدون كسور (0)</SelectItem>
+                          <SelectItem value="2">خانتين (0.00)</SelectItem>
+                          <SelectItem value="3">3 خانات (0.000)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <LabelWithIcon label=":Quantity Precision" />
+                    <div className="grid gap-2">
+                      <LabelWithIcon label="الكسور العشرية للكميات" />
                       <Select
                         value={formData.quantity_precision.toString()}
                         onValueChange={(v) =>
@@ -681,55 +764,37 @@ const CompanySettings = () => {
                           }))
                         }
                       >
-                        <SelectTrigger className="bg-muted/20">
-                          <SelectValue placeholder="Precision" />
+                        <SelectTrigger className="h-12 bg-background">
+                          <SelectValue placeholder="عدد الخانات" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="2">2</SelectItem>
-                          <SelectItem value="3">3</SelectItem>
-                          <SelectItem value="4">4</SelectItem>
+                          <SelectItem value="0">أعداد صحيحة فقط (0)</SelectItem>
+                          <SelectItem value="2">خانتين (0.00)</SelectItem>
+                          <SelectItem value="3">3 خانات (0.000)</SelectItem>
+                          <SelectItem value="4">دقة عالية (0.0000)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                 </CardContent>
+
+                {/* Footer Actions */}
+                <div className="p-6 bg-muted/20 border-t flex justify-center sticky bottom-0 z-10 backdrop-blur-sm">
+                  <Button
+                    type="submit"
+                    className="bg-[#ff4d4f] hover:bg-[#ff7875] text-white px-12 h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all rounded-xl"
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <Loader2 className="animate-spin mr-2" />
+                    ) : (
+                      <Save className="mr-2 w-5 h-5" />
+                    )}
+                    حفظ التغييرات
+                  </Button>
+                </div>
               </Card>
-
-              {/* Sticky Footer */}
-              <div className="sticky bottom-0 bg-background/95 backdrop-blur py-4 border-t mt-4 flex justify-center z-10">
-                <Button
-                  type="submit"
-                  className="bg-[#ff4d4f] hover:bg-[#ff7875] text-white px-12 py-6 text-lg"
-                  disabled={saving}
-                >
-                  {saving ? <Loader2 className="animate-spin mr-2" /> : null}
-                  تحديث الإعدادات
-                </Button>
-              </div>
             </form>
-          </div>
-
-          {/* Vertical Tabs (Sidebar) - Right Side */}
-          <div className="w-[280px] bg-card rounded-lg border h-fit sticky top-0">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors border-b last:border-0 hover:bg-muted/50",
-                    isActive
-                      ? "bg-[#3b82f6] text-white hover:bg-[#2563eb]"
-                      : "text-foreground bg-white"
-                  )}
-                >
-                  {/* Icon logic: show specific icons if needed, simplify for now */}
-                  <span className="flex-1 text-right">{tab.label}</span>
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>
