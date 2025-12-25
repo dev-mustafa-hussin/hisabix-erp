@@ -311,11 +311,6 @@ const CompanySettings = () => {
             variant: "default", // Green-ish usually default or specific success
             className: "bg-green-600 text-white border-none",
           });
-
-          // Force reload after 1.5s to refresh context
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
         }
       }
     } catch (error: any) {

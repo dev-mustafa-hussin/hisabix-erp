@@ -196,11 +196,9 @@ const Users = () => {
           }
 
           if (repairResult && (repairResult as any).success) {
-            toast.success("تم إعداد حسابك بنجاح! جاري التحديث...");
-            // Reload to fetch fresh data
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
+            toast.success("تم إعداد حسابك بنجاح!");
+            // Re-fetch data instead of reload to prevent infinite loop
+            fetchData();
           }
           // --- SELF REPAIR LOGIC END ---
         }
