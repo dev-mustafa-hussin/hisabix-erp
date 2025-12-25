@@ -511,6 +511,14 @@ const App = () => {
                   }
                 />
                 <Route
+                  path="/company-settings"
+                  element={
+                    <ProtectedRoute>
+                      <CompanySettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/settings/subscription"
                   element={
                     <ProtectedRoute>
