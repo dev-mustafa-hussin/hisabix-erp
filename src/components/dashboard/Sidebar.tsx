@@ -53,7 +53,7 @@ const menuItems: MenuItem[] = [
       { label: "المندوبين", href: "/user-management/delegates" },
     ],
   },
-  { icon: ClipboardList, label: "سجل التدقيق", href: "/audit-logs" },
+
   {
     icon: Users,
     label: "جهات الاتصال",
@@ -87,10 +87,7 @@ const menuItems: MenuItem[] = [
       { label: "الضمانات", href: "/products/warranties" },
     ],
   },
-  { icon: Warehouse, label: "إدارة المخزون", href: "/inventory" },
-  { icon: PieChart, label: "تقرير المخزون", href: "/inventory-report" },
-  { icon: CreditCard, label: "المستحقات", href: "/receivables" },
-  { icon: FileText, label: "الفواتير", href: "/invoices" },
+
   {
     icon: ShoppingCart,
     label: "المشتريات",
@@ -153,19 +150,7 @@ const menuItems: MenuItem[] = [
       { label: "فئات المصاريف", href: "/expenses/categories" },
     ],
   },
-  {
-    icon: Truck,
-    label: "إدارة المشتريات",
-    href: "#",
-    hasSubmenu: true,
-    submenu: [
-      { label: "طلبات الشراء", href: "#" },
-      { label: "الموردين", href: "#" },
-    ],
-  },
-  { icon: Calculator, label: "التقارير", href: "/reports" },
-  { icon: FileBox, label: "نماذج الإشعارات", href: "#" },
-  { icon: BarChart3, label: "إدارة الترويج المخزني", href: "#" },
+
   {
     icon: Store,
     label: "المتجر الإلكتروني",
@@ -230,12 +215,6 @@ const menuItems: MenuItem[] = [
       { label: "نماذج الإشعارات", href: "/settings/notification-templates" },
     ],
   },
-  {
-    icon: BarChart2,
-    label: "لوحة تحكم الإشعارات",
-    href: "/notifications-dashboard",
-  },
-  { icon: History, label: "سجل الإشعارات", href: "/notification-logs" },
 ];
 
 const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
