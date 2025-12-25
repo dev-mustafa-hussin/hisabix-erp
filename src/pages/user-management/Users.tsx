@@ -236,13 +236,38 @@ const Users = () => {
       toast.error("يرجى إدخال البريد الإلكتروني");
       return;
     }
+    if (!companyId || !company?.name) {
+      toast.error("بيانات الشركة غير متوفرة");
+      return;
+    }
+
     setInviting(true);
-    // Simulation for now
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "send-invitation",
+        {
+          body: {
+            email: inviteEmail,
+            role: inviteRole,
+            company_id: companyId,
+            company_name: company.name,
+            inviter_name: user?.role === "authenticated" ? "Admin" : "Someone", // Fallback, simpler to get from profile if needed
+          },
+        }
+      );
+
+      if (error) throw error;
+
       toast.success("تم إرسال الدعوة بنجاح");
-      setInviting(false);
       setInviteOpen(false);
-    }, 1000);
+      setInviteEmail("");
+      setInviteRole("user");
+    } catch (error: any) {
+      console.error("Error sending invitation:", error);
+      toast.error(error.message || "فشل إرسال الدعوة");
+    } finally {
+      setInviting(false);
+    }
   };
 
   const toggleSelectAll = () => {
