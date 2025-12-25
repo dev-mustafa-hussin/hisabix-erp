@@ -84,6 +84,7 @@ interface CompanyUser {
     full_name: string | null;
     avatar_url: string | null;
     phone: string | null;
+    username?: string | null;
   };
   email?: string;
 }
@@ -148,6 +149,11 @@ const Users = () => {
   );
   const [inviting, setInviting] = useState(false);
 
+  // ID Card State
+  const [idCardOpen, setIdCardOpen] = useState(false);
+  const [selectedUserForCard, setSelectedUserForCard] =
+    useState<CompanyUser | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user?.id) return;
@@ -190,7 +196,8 @@ const Users = () => {
       result = companyUsers.filter(
         (u) =>
           u.profile?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-          u.email?.toLowerCase().includes(search.toLowerCase())
+          u.email?.toLowerCase().includes(search.toLowerCase()) ||
+          u.profile?.username?.toLowerCase().includes(search.toLowerCase())
       );
     }
     setFilteredUsers(result);
@@ -210,7 +217,7 @@ const Users = () => {
     for (const u of users || []) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, phone")
+        .select("full_name, avatar_url, phone, username")
         .eq("user_id", u.user_id)
         .maybeSingle();
 
@@ -254,6 +261,15 @@ const Users = () => {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShowIdCard = (user: CompanyUser) => {
+    setSelectedUserForCard(user);
+    setIdCardOpen(true);
+  };
+
   // Pagination Logic
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
@@ -265,9 +281,9 @@ const Users = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 print-container">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between no-print">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             المستخدمين{" "}
             <span className="text-muted-foreground text-sm font-normal">
@@ -281,8 +297,8 @@ const Users = () => {
           </div>
         </div>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="bg-white border-b p-4">
+        <Card className="border-0 shadow-sm print:shadow-none print:border">
+          <CardHeader className="bg-white border-b p-4 no-print">
             <div className="flex items-center justify-between">
               <CardTitle>جميع المستخدمين</CardTitle>
               <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -344,7 +360,7 @@ const Users = () => {
           </CardHeader>
           <CardContent className="p-4">
             {/* Controls Bar */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center bg-white p-1">
+            <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center bg-white p-1 no-print">
               <div className="flex items-center gap-2">
                 <span className="text-sm">عرض</span>
                 <Select
@@ -366,15 +382,40 @@ const Users = () => {
 
               <div className="flex flex-wrap items-center gap-2">
                 {/* Export Buttons */}
-                <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2"
+                  onClick={() =>
+                    exportUsersToExcel(
+                      companyUsers.map((u) => ({ ...u, ...u.profile })),
+                      "users"
+                    )
+                  }
+                >
                   <FileSpreadsheet className="w-4 h-4" />
                   تصدير إلى CSV
                 </Button>
-                <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2"
+                  onClick={() =>
+                    exportUsersToExcel(
+                      companyUsers.map((u) => ({ ...u, ...u.profile })),
+                      "users"
+                    )
+                  }
+                >
                   <FileSpreadsheet className="w-4 h-4 text-green-600" />
                   تصدير إلى Excel
                 </Button>
-                <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2"
+                  onClick={handlePrint}
+                >
                   <Printer className="w-4 h-4" />
                   طباعة
                 </Button>
@@ -457,7 +498,7 @@ const Users = () => {
                 <TableHeader className="bg-gray-50/50">
                   <TableRow>
                     {visibleColumns.select && (
-                      <TableHead className="w-[50px] text-center">
+                      <TableHead className="w-[50px] text-center no-print">
                         <Checkbox
                           checked={
                             filteredUsers.length > 0 &&
@@ -482,7 +523,9 @@ const Users = () => {
                       </TableHead>
                     )}
                     {visibleColumns.actions && (
-                      <TableHead className="text-center">خيار</TableHead>
+                      <TableHead className="text-center no-print">
+                        خيار
+                      </TableHead>
                     )}
                   </TableRow>
                 </TableHeader>
@@ -506,7 +549,7 @@ const Users = () => {
                     currentEntries.map((user) => (
                       <TableRow key={user.id} className="hover:bg-gray-50/50">
                         {visibleColumns.select && (
-                          <TableCell className="text-center">
+                          <TableCell className="text-center no-print">
                             <Checkbox
                               checked={selectedUsers.includes(user.id)}
                               onCheckedChange={() => toggleSelectUser(user.id)}
@@ -515,7 +558,9 @@ const Users = () => {
                         )}
                         {visibleColumns.username && (
                           <TableCell className="font-medium">
-                            {user.profile?.full_name?.split(" ")[0] || "مستخدم"}
+                            {user.profile?.username ||
+                              user.profile?.full_name?.split(" ")[0] ||
+                              "مستخدم"}
                           </TableCell>
                         )}
                         {visibleColumns.name && (
@@ -525,7 +570,11 @@ const Users = () => {
                         )}
                         {visibleColumns.role && (
                           <TableCell className="text-center">
-                            <Badge className="bg-transparent text-gray-700 hover:bg-transparent font-normal text-sm">
+                            <Badge
+                              className={`bg-transparent text-gray-700 hover:bg-transparent font-normal text-sm ${
+                                roleLabels[user.role]?.color
+                              }`}
+                            >
                               {roleLabels[user.role]?.label || user.role}
                             </Badge>
                           </TableCell>
@@ -536,7 +585,7 @@ const Users = () => {
                           </TableCell>
                         )}
                         {visibleColumns.actions && (
-                          <TableCell>
+                          <TableCell className="no-print">
                             <div className="flex items-center justify-center gap-2">
                               <Button
                                 variant="outline"
@@ -558,6 +607,7 @@ const Users = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-8 px-3 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 gap-1 rounded-full"
+                                onClick={() => handleShowIdCard(user)}
                               >
                                 <IdCard className="w-3.5 h-3.5" />
                                 ID
@@ -581,7 +631,7 @@ const Users = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 no-print">
               <div className="text-sm text-muted-foreground">
                 عرض {indexOfFirstEntry + 1} إلى{" "}
                 {Math.min(indexOfLastEntry, filteredUsers.length)} من{" "}
@@ -629,6 +679,55 @@ const Users = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* ID Card Dialog */}
+        <Dialog open={idCardOpen} onOpenChange={setIdCardOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>بطاقة المستخدم</DialogTitle>
+            </DialogHeader>
+            {selectedUserForCard && (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+                  <AvatarImage
+                    src={selectedUserForCard.profile?.avatar_url || ""}
+                  />
+                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                    {selectedUserForCard.profile?.full_name
+                      ?.slice(0, 2)
+                      .toUpperCase() || "US"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-center space-y-1">
+                  <h3 className="text-xl font-bold">
+                    {selectedUserForCard.profile?.full_name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedUserForCard.email}
+                  </p>
+                  <Badge className="mt-2">{selectedUserForCard.role}</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-4 w-full mt-4 border-t pt-4">
+                  <div className="text-center p-2 bg-gray-50 rounded text-sm">
+                    <p className="text-muted-foreground">رقم الهاتف</p>
+                    <p className="font-medium">
+                      {selectedUserForCard.profile?.phone || "-"}
+                    </p>
+                  </div>
+                  <div className="text-center p-2 bg-gray-50 rounded text-sm">
+                    <p className="text-muted-foreground">تاريخ الانضمام</p>
+                    <p className="font-medium">
+                      {format(
+                        new Date(selectedUserForCard.created_at),
+                        "yyyy/MM/dd"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
