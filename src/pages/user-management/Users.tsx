@@ -160,7 +160,8 @@ const Users = () => {
       setLoading(true);
 
       try {
-        const { data: companyUser } = await supabase
+        // 1. Check if user is linked to any company
+        const { data: companyUser, error: fetchError } = await supabase
           .from("company_users")
           .select("company_id, role, is_owner")
           .eq("user_id", user.id)
@@ -179,6 +180,67 @@ const Users = () => {
 
           if (companyData) setCompany(companyData);
           await fetchCompanyUsers(companyUser.company_id);
+        } else {
+          // --- SELF REPAIR LOGIC START ---
+          // If no company user found, this is the orphaned admin case.
+          // We will attempt to repair it right here.
+          console.log("No company link found. Attempting self-repair...");
+
+          // A. Create Company
+          const { data: newCompany, error: createCompanyError } = await supabase
+            .from("companies")
+            .insert({
+              name: `My Company`,
+              currency: "EGP",
+              timezone: "Africa/Cairo",
+            })
+            .select()
+            .single();
+
+          if (createCompanyError) {
+            console.error(
+              "Repair failed: Could not create company",
+              createCompanyError
+            );
+            toast.error("خطأ في إنشاء الشركة تلقائياً");
+            return;
+          }
+
+          // B. Link User
+          const { error: linkError } = await supabase
+            .from("company_users")
+            .insert({
+              company_id: newCompany.id,
+              user_id: user.id,
+              role: "admin",
+              is_owner: true,
+            });
+
+          if (linkError) {
+            console.error("Repair failed: Could not link user", linkError);
+            toast.error("خطأ في ربط المستخدم بالشركة");
+            return;
+          }
+
+          // C. Ensure Profile Exists (Update/Insert)
+          // We blindly update or insert to ensure profile is there
+          await supabase.from("profiles").upsert({
+            user_id: user.id,
+            full_name: user.email?.split("@")[0] || "Admin",
+            username: user.email?.split("@")[0] || "admin",
+          });
+
+          toast.success("تم إصلاح الحساب وإنشاء شركة افتراضية بنجاح!");
+
+          // D. Set State Immediately
+          setCompanyId(newCompany.id);
+          setCompany(newCompany);
+          setIsOwner(true);
+          setIsAdmin(true);
+
+          // E. Fetch empty list (will contain self now)
+          await fetchCompanyUsers(newCompany.id);
+          // --- SELF REPAIR LOGIC END ---
         }
       } catch (error) {
         console.error("Error fetching data:", error);
