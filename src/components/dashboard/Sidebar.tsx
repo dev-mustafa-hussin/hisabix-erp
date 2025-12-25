@@ -273,7 +273,7 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
       </div>
 
       {/* Menu */}
-      <nav className="p-2 flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <nav className="p-2 flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
         {menuItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
