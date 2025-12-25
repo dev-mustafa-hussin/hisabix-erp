@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Calendar,
   Grid3X3,
@@ -27,7 +28,34 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSidebar } from "@/contexts/SidebarContext";
 
-const Header = () => {
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Header ErrorBoundary caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-14 bg-red-100 text-red-600 flex items-center justify-center p-2 text-xs">
+          Header Error: {this.state.error?.message}
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+const HeaderContent = () => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -171,5 +199,13 @@ const Header = () => {
     </header>
   );
 };
+
+const Header = () => (
+  <ErrorBoundary>
+    <HeaderContent />
+  </ErrorBoundary>
+);
+
+import { cn } from "@/lib/utils";
 
 export default Header;
