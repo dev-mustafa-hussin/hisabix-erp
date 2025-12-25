@@ -156,18 +156,26 @@ const Users = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        console.log("❌ No user ID found");
+        return;
+      }
+      console.log("✅ User ID:", user.id);
       setLoading(true);
 
       try {
         // 1. Check if user is linked to any company
+        console.log("🔍 Checking company_users for user:", user.id);
         const { data: companyUser, error: fetchError } = await supabase
           .from("company_users")
           .select("company_id, role, is_owner")
           .eq("user_id", user.id)
           .maybeSingle();
 
+        console.log("📊 Company User Result:", { companyUser, fetchError });
+
         if (companyUser) {
+          console.log("✅ Found company link:", companyUser.company_id);
           setCompanyId(companyUser.company_id);
           setIsOwner(companyUser.is_owner || false);
           setIsAdmin(companyUser.role === "admin" || companyUser.is_owner);
@@ -178,32 +186,36 @@ const Users = () => {
             .eq("id", companyUser.company_id)
             .maybeSingle();
 
+          console.log("🏢 Company Data:", companyData);
           if (companyData) setCompany(companyData);
+
+          console.log("👥 Fetching company users for:", companyUser.company_id);
           await fetchCompanyUsers(companyUser.company_id);
         } else {
-          // --- SELF REPAIR LOGIC START (DATABASE RPC) ---
-          console.log("No company link found. Invoking database repair...");
+          console.log("⚠️ No company link found - starting repair...");
           toast.info("جاري تهيئة حسابك لأول مرة...");
 
           const { data: repairResult, error: repairError } = await supabase.rpc(
             "repair_my_account"
           );
 
+          console.log("🔧 Repair Result:", { repairResult, repairError });
+
           if (repairError) {
-            console.error("Database repair failed:", repairError);
+            console.error("❌ Database repair failed:", repairError);
             toast.error("فشل تهيئة الحساب. يرجى التواصل مع الدعم.");
             return;
           }
 
           if (repairResult && (repairResult as any).success) {
+            console.log("✅ Repair successful, re-fetching data...");
             toast.success("تم إعداد حسابك بنجاح!");
             // Re-fetch data instead of reload to prevent infinite loop
             fetchData();
           }
-          // --- SELF REPAIR LOGIC END ---
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("💥 Error fetching data:", error);
       } finally {
         setLoading(false);
       }
@@ -227,21 +239,34 @@ const Users = () => {
   }, [search, companyUsers]);
 
   const fetchCompanyUsers = async (compId: string) => {
+    console.log("👥 fetchCompanyUsers called with compId:", compId);
     const { data: users, error } = await supabase
       .from("company_users")
       .select("*")
       .eq("company_id", compId)
       .order("created_at", { ascending: true });
 
-    if (error) return;
+    console.log("📋 Company users query result:", {
+      users,
+      error,
+      count: users?.length,
+    });
+
+    if (error) {
+      console.error("❌ Error fetching company users:", error);
+      return;
+    }
 
     const usersWithProfiles: CompanyUser[] = [];
     for (const u of users || []) {
-      const { data: profile } = await supabase
+      console.log("👤 Fetching profile for user:", u.user_id);
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("full_name, avatar_url, phone, username")
         .eq("user_id", u.user_id)
         .maybeSingle();
+
+      console.log("👤 Profile result:", { profile, profileError });
 
       usersWithProfiles.push({
         ...u,
@@ -250,6 +275,7 @@ const Users = () => {
         profile: profile || undefined,
       });
     }
+    console.log("✅ Final usersWithProfiles:", usersWithProfiles);
     setCompanyUsers(usersWithProfiles);
   };
 
