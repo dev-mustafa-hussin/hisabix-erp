@@ -8,7 +8,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import Customers from "./pages/Customers";
+import Customers from "./pages/contacts/Customers";
+import Suppliers from "./pages/contacts/Suppliers";
+import CustomerGroups from "./pages/contacts/CustomerGroups";
+import ImportContacts from "./pages/contacts/ImportContacts";
+import ContactsMap from "./pages/contacts/ContactsMap";
 import Products from "./pages/Products";
 import Inventory from "./pages/Inventory";
 import Sales from "./pages/Sales";
@@ -56,10 +60,42 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/customers"
+                  path="/contacts/customers"
                   element={
                     <ProtectedRoute>
                       <Customers />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/contacts/suppliers"
+                  element={
+                    <ProtectedRoute>
+                      <Suppliers />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/contacts/groups"
+                  element={
+                    <ProtectedRoute>
+                      <CustomerGroups />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/contacts/import"
+                  element={
+                    <ProtectedRoute>
+                      <ImportContacts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/contacts/map"
+                  element={
+                    <ProtectedRoute>
+                      <ContactsMap />
                     </ProtectedRoute>
                   }
                 />
