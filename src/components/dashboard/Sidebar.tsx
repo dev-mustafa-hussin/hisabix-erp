@@ -394,7 +394,7 @@ export const MobileSidebarTrigger = () => {
           <Menu className="w-6 h-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="p-0 w-72 bg-sidebar">
+      <SheetContent side="right" className="p-0 w-72 bg-sidebar" hideClose>
         <SidebarContent onClose={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
