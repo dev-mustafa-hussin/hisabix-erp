@@ -181,65 +181,26 @@ const Users = () => {
           if (companyData) setCompany(companyData);
           await fetchCompanyUsers(companyUser.company_id);
         } else {
-          // --- SELF REPAIR LOGIC START ---
-          // If no company user found, this is the orphaned admin case.
-          // We will attempt to repair it right here.
-          console.log("No company link found. Attempting self-repair...");
+          // --- SELF REPAIR LOGIC START (SERVER SIDE) ---
+          console.log("No company link found. Invoking server-side repair...");
+          toast.info("جاري إصلاح الحساب تلقائياً...");
 
-          // A. Create Company
-          const { data: newCompany, error: createCompanyError } = await supabase
-            .from("companies")
-            .insert({
-              name: `My Company`,
-              currency: "EGP",
-              timezone: "Africa/Cairo",
-            })
-            .select()
-            .single();
+          const { data: repairResult, error: repairError } =
+            await supabase.functions.invoke("fix-account");
 
-          if (createCompanyError) {
-            console.error(
-              "Repair failed: Could not create company",
-              createCompanyError
-            );
-            toast.error("خطأ في إنشاء الشركة تلقائياً");
+          if (repairError) {
+            console.error("Server repair failed:", repairError);
+            toast.error("فشل إصلاح الحساب. يرجى التواصل مع الدعم.");
             return;
           }
 
-          // B. Link User
-          const { error: linkError } = await supabase
-            .from("company_users")
-            .insert({
-              company_id: newCompany.id,
-              user_id: user.id,
-              role: "admin",
-              is_owner: true,
-            });
-
-          if (linkError) {
-            console.error("Repair failed: Could not link user", linkError);
-            toast.error("خطأ في ربط المستخدم بالشركة");
-            return;
+          if (repairResult?.success) {
+            toast.success("تم إصلاح الحساب بنجاح! جاري التحديث...");
+            // Retry fetch structure after small delay
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
           }
-
-          // C. Ensure Profile Exists (Update/Insert)
-          // We blindly update or insert to ensure profile is there
-          await supabase.from("profiles").upsert({
-            user_id: user.id,
-            full_name: user.email?.split("@")[0] || "Admin",
-            username: user.email?.split("@")[0] || "admin",
-          });
-
-          toast.success("تم إصلاح الحساب وإنشاء شركة افتراضية بنجاح!");
-
-          // D. Set State Immediately
-          setCompanyId(newCompany.id);
-          setCompany(newCompany);
-          setIsOwner(true);
-          setIsAdmin(true);
-
-          // E. Fetch empty list (will contain self now)
-          await fetchCompanyUsers(newCompany.id);
           // --- SELF REPAIR LOGIC END ---
         }
       } catch (error) {
