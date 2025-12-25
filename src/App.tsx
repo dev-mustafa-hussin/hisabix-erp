@@ -53,6 +53,30 @@ import ExpenseList from "./pages/expenses/ExpenseList";
 import AddExpense from "./pages/expenses/AddExpense";
 import ExpenseCategories from "./pages/expenses/ExpenseCategories";
 
+import CheckList from "./pages/checks/CheckList";
+import AddCheck from "./pages/checks/AddCheck";
+
+import AuditList from "./pages/inventory-audit/AuditList";
+import AddAudit from "./pages/inventory-audit/AddAudit";
+
+import NotificationTemplates from "./pages/settings/NotificationTemplates";
+import Branches from "./pages/settings/Branches";
+import InvoiceSettings from "./pages/settings/InvoiceSettings";
+import BarcodeSettings from "./pages/settings/BarcodeSettings";
+import Printers from "./pages/settings/Printers";
+import TaxRates from "./pages/settings/TaxRates";
+import Subscription from "./pages/settings/Subscription";
+
+import ProfitLoss from "./pages/reports/ProfitLoss";
+import PurchasesSales from "./pages/reports/PurchasesSales";
+import TaxReport from "./pages/reports/TaxReport";
+import ContactReport from "./pages/reports/ContactReport";
+import InventoryReport from "./pages/reports/InventoryReport";
+import TrendingProducts from "./pages/reports/TrendingProducts";
+import SalesReport from "./pages/reports/SalesReport";
+import ExpenseReport from "./pages/reports/ExpenseReport";
+import ActivityLog from "./pages/reports/ActivityLog";
+
 import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
 import Receivables from "./pages/Receivables";
@@ -429,10 +453,165 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/reports"
+                  path="/checks"
                   element={
                     <ProtectedRoute>
-                      <Reports />
+                      <CheckList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/checks/add"
+                  element={
+                    <ProtectedRoute>
+                      <AddCheck />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/inventory-audit"
+                  element={
+                    <ProtectedRoute>
+                      <AuditList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/inventory-audit/add"
+                  element={
+                    <ProtectedRoute>
+                      <AddAudit />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/settings/notification-templates"
+                  element={
+                    <ProtectedRoute>
+                      <NotificationTemplates />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/branches"
+                  element={
+                    <ProtectedRoute>
+                      <Branches />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/invoice"
+                  element={
+                    <ProtectedRoute>
+                      <InvoiceSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/barcode"
+                  element={
+                    <ProtectedRoute>
+                      <BarcodeSettings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/printers"
+                  element={
+                    <ProtectedRoute>
+                      <Printers />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/tax-rates"
+                  element={
+                    <ProtectedRoute>
+                      <TaxRates />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings/subscription"
+                  element={
+                    <ProtectedRoute>
+                      <Subscription />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/reports/profit-loss"
+                  element={
+                    <ProtectedRoute>
+                      <ProfitLoss />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports/purchases-sales"
+                  element={
+                    <ProtectedRoute>
+                      <PurchasesSales />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports/tax"
+                  element={
+                    <ProtectedRoute>
+                      <TaxReport />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports/contacts"
+                  element={
+                    <ProtectedRoute>
+                      <ContactReport />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports/inventory"
+                  element={
+                    <ProtectedRoute>
+                      <InventoryReport />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports/trending"
+                  element={
+                    <ProtectedRoute>
+                      <TrendingProducts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports/sales"
+                  element={
+                    <ProtectedRoute>
+                      <SalesReport />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports/expenses"
+                  element={
+                    <ProtectedRoute>
+                      <ExpenseReport />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/reports/activity"
+                  element={
+                    <ProtectedRoute>
+                      <ActivityLog />
                     </ProtectedRoute>
                   }
                 />
