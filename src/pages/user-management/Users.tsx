@@ -181,25 +181,26 @@ const Users = () => {
           if (companyData) setCompany(companyData);
           await fetchCompanyUsers(companyUser.company_id);
         } else {
-          // --- SELF REPAIR LOGIC START (SERVER SIDE) ---
-          console.log("No company link found. Invoking server-side repair...");
-          toast.info("جاري إصلاح الحساب تلقائياً...");
+          // --- SELF REPAIR LOGIC START (DATABASE RPC) ---
+          console.log("No company link found. Invoking database repair...");
+          toast.info("جاري تهيئة حسابك لأول مرة...");
 
-          const { data: repairResult, error: repairError } =
-            await supabase.functions.invoke("fix-account");
+          const { data: repairResult, error: repairError } = await supabase.rpc(
+            "repair_my_account"
+          );
 
           if (repairError) {
-            console.error("Server repair failed:", repairError);
-            toast.error("فشل إصلاح الحساب. يرجى التواصل مع الدعم.");
+            console.error("Database repair failed:", repairError);
+            toast.error("فشل تهيئة الحساب. يرجى التواصل مع الدعم.");
             return;
           }
 
-          if (repairResult?.success) {
-            toast.success("تم إصلاح الحساب بنجاح! جاري التحديث...");
-            // Retry fetch structure after small delay
+          if (repairResult && (repairResult as any).success) {
+            toast.success("تم إعداد حسابك بنجاح! جاري التحديث...");
+            // Reload to fetch fresh data
             setTimeout(() => {
               window.location.reload();
-            }, 1500);
+            }, 1000);
           }
           // --- SELF REPAIR LOGIC END ---
         }
