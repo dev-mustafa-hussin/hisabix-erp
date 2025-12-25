@@ -56,9 +56,6 @@ import ExpenseCategories from "./pages/expenses/ExpenseCategories";
 import CheckList from "./pages/checks/CheckList";
 import AddCheck from "./pages/checks/AddCheck";
 
-import AuditList from "./pages/inventory-audit/AuditList";
-import AddAudit from "./pages/inventory-audit/AddAudit";
-
 import NotificationTemplates from "./pages/settings/NotificationTemplates";
 import Branches from "./pages/settings/Branches";
 import InvoiceSettings from "./pages/settings/InvoiceSettings";
@@ -543,14 +540,7 @@ const App = () => {
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/audit-logs"
-                  element={
-                    <ProtectedRoute>
-                      <AuditLogs />
-                    </ProtectedRoute>
-                  }
-                />
+
                 <Route
                   path="/profile-settings"
                   element={
