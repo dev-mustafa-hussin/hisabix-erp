@@ -78,14 +78,14 @@ const Login = () => {
     <AuthLayout>
       <div className="w-full max-w-md card-glass rounded-2xl p-8 animate-slide-up">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
+          <div className="flex items-center justify-center gap-4 mb-4">
             <img
               src="/logo-new.png"
               alt="Logo"
-              className="h-32 object-contain"
+              className="h-16 object-contain"
             />
+            <h2 className="text-xl font-bold text-card-foreground">HisabiX</h2>
           </div>
-          <h2 className="text-xl font-bold text-card-foreground">HisabiX</h2>
           <p className="text-muted-foreground text-sm mt-1">
             سجل الدخول للمتابعة
           </p>
