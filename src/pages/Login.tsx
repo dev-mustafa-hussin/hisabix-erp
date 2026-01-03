@@ -27,7 +27,7 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         title: "خطأ",
@@ -48,7 +48,7 @@ const Login = () => {
       } else if (error.message.includes("Email not confirmed")) {
         errorMessage = "يرجى تأكيد البريد الإلكتروني أولاً";
       }
-      
+
       toast({
         title: "خطأ في تسجيل الدخول",
         description: errorMessage,
@@ -77,10 +77,27 @@ const Login = () => {
   return (
     <AuthLayout>
       <div className="w-full max-w-md card-glass rounded-2xl p-8 animate-slide-up">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <img
+              src="/logo-new.png"
+              alt="Logo"
+              className="h-32 object-contain"
+            />
+          </div>
+          <h2 className="text-xl font-bold text-card-foreground">HisabiX</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            سجل الدخول للمتابعة
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-card-foreground text-sm font-medium block text-left">
+            <Label
+              htmlFor="email"
+              className="text-card-foreground text-sm font-medium block text-left"
+            >
               البريد الإلكتروني
             </Label>
             <Input
@@ -100,7 +117,10 @@ const Login = () => {
               <Link to="#" className="text-primary text-sm hover:underline">
                 نسيت كلمة السر؟
               </Link>
-              <Label htmlFor="password" className="text-card-foreground text-sm font-medium">
+              <Label
+                htmlFor="password"
+                className="text-card-foreground text-sm font-medium"
+              >
                 كلمة السر
               </Label>
             </div>
@@ -125,7 +145,10 @@ const Login = () => {
 
           {/* Remember Me */}
           <div className="flex items-center justify-end gap-3">
-            <Label htmlFor="remember" className="text-card-foreground text-sm cursor-pointer">
+            <Label
+              htmlFor="remember"
+              className="text-card-foreground text-sm cursor-pointer"
+            >
               تذكرني
             </Label>
             <Switch
@@ -179,7 +202,10 @@ const Login = () => {
           {/* Register Link */}
           <p className="text-center text-card-foreground text-sm">
             لم تسجل بعد؟{" "}
-            <Link to="/register" className="text-primary font-semibold hover:underline">
+            <Link
+              to="/register"
+              className="text-primary font-semibold hover:underline"
+            >
               سجل الآن
             </Link>
           </p>
